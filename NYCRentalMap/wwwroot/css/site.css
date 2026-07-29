@@ -3,31 +3,31 @@
    ========================================================================== */
 
 :root {
-    /* Ultra-Cool Modern Professional Theme (Slate, Obsidian & Electric Coral) */
-    --bg-main: #f8fafc;
-    --bg-card: #ffffff;
-    --bg-header: #ffffff;
-    --bg-input: #f1f5f9;
-    --bg-hover: #e2e8f0;
-    --border-color: #e2e8f0;
+    /* Color Palette (Warm Soft Beige & Cream Light Theme) */
+    --bg-main: #F7F3EE;
+    --bg-card: #FFFFFF;
+    --bg-header: #FFFFFF;
+    --bg-input: #F3ECE4;
+    --bg-hover: #EFE4D8;
+    --border-color: #E6CCB2;
     
-    --text-main: #0f172a;
-    --text-muted: #475569;
-    --text-light: #94a3b8;
+    --text-main: #2D2319;
+    --text-muted: #736354;
+    --text-light: #A39181;
     
-    --accent-red: #f43f5e;
-    --accent-red-hover: #e11d48;
-    --accent-red-light: rgba(244, 63, 94, 0.12);
+    --accent-red: #C69B7B;
+    --accent-red-hover: #B88B68;
+    --accent-red-light: rgba(198, 155, 123, 0.15);
     
     --accent-blue: #3b82f6;
     --accent-green: #10b981;
     --accent-orange: #f97316;
     --accent-purple: #8b5cf6;
-    --accent-yellow: #f59e0b;
+    --accent-yellow: #eab308;
     --accent-pink: #ec4899;
 
-    --card-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
-    --card-shadow-hover: 0 12px 32px rgba(15, 23, 42, 0.12);
+    --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.02);
+    --card-shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.08);
     
     --dark-widget-bg: #111827;
     --dark-widget-text: #ffffff;
@@ -876,9 +876,9 @@ body {
     border-radius: 50%;
 }
 
-.dot-coral { background-color: #6366f1; }
-.dot-blue { background-color: #38bdf8; }
-.dot-yellow { background-color: #f43f5e; }
+.dot-coral { background-color: #C69B7B; }
+.dot-blue { background-color: #E6CCB2; }
+.dot-yellow { background-color: #FAEDCD; }
 
 .legend-name {
     color: var(--text-muted);
