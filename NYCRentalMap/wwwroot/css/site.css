@@ -130,19 +130,20 @@ body {
 }
 
 .nav-item:hover, .nav-item.active {
-    color: var(--text-main);
-    font-weight: 600;
+    color: var(--accent-red) !important;
+    font-weight: 700;
 }
 
 .nav-item.active::after {
     content: '';
     position: absolute;
-    bottom: -12px;
+    bottom: -14px;
     left: 0;
     right: 0;
-    height: 3px;
+    height: 4px;
     background-color: var(--accent-red);
-    border-radius: 3px;
+    border-radius: 4px 4px 0 0;
+    box-shadow: 0 2px 8px rgba(244, 63, 94, 0.5);
 }
 
 .filter-toggle-nav-btn.active {

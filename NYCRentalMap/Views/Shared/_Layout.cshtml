@@ -22,7 +22,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
 
     <!-- App CSS -->
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.css?v=@DateTime.Now.Ticks" />
 </head>
 <body>
     <!-- Top Navbar Header -->
@@ -351,7 +351,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <!-- App JS -->
-    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/site.js?v=@DateTime.Now.Ticks"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>
