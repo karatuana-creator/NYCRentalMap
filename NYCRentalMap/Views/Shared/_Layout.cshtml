@@ -45,7 +45,7 @@
                 </a>
                 <a class="nav-item" href="javascript:void(0)" onclick="appUI.switchTab('compare')">Karşılaştır</a>
                 <div class="ai-nav-dropdown-wrap" id="aiNavWrap">
-                    <a class="nav-item ai-nav-item" href="javascript:void(0)" onclick="appUI.toggleAiDropdown()" style="font-weight:700; color:#8b5cf6;">
+                    <a class="nav-item ai-nav-item" href="javascript:void(0)" onclick="appUI.toggleAiDropdown(event)" style="font-weight:700; color:#8b5cf6;">
                         <i class="fa-solid fa-sparkles" style="color:#8b5cf6;"></i> AI Asistan
                     </a>
                     <!-- AI Dropdown Panel -->
@@ -61,7 +61,7 @@
                                     <p class="ai-panel-sub">Akıllı Veri Analisti · <span class="ai-online-txt">● Çevrimiçi</span></p>
                                 </div>
                             </div>
-                            <button type="button" class="ai-close-btn" onclick="appUI.toggleAiDropdown()">
+                            <button type="button" class="ai-close-btn" onclick="appUI.toggleAiDropdown(event)">
                                 <i class="fa-solid fa-xmark"></i>
                             </button>
                         </div>
