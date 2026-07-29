@@ -1751,7 +1751,7 @@ const appUI = (function () {
         isLoggedIn: true,
         name: 'Tuana Kara',
         email: 'tuana.kara@example.com',
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80'
+        avatar: '/images/default-avatar.png'
     };
 
     function updateHeaderUserUI() {
