@@ -876,9 +876,9 @@ body {
     border-radius: 50%;
 }
 
-.dot-coral { background-color: #6F4E37; }
-.dot-blue { background-color: #A67B5B; }
-.dot-yellow { background-color: #E0C097; }
+.dot-coral { background-color: #C69B7B; }
+.dot-blue { background-color: #E6CCB2; }
+.dot-yellow { background-color: #FAEDCD; }
 
 .legend-name {
     color: var(--text-muted);

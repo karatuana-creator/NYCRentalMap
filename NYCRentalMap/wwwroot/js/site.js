@@ -509,7 +509,7 @@ const appUI = (function () {
                     labels: ['Entire Home', 'Private Room', 'Shared Room'],
                     datasets: [{
                         data: [25604, 21054, 2237],
-                        backgroundColor: ['#6F4E37', '#A67B5B', '#E0C097'],
+                        backgroundColor: ['#C69B7B', '#E6CCB2', '#FAEDCD'],
                         borderWidth: 2,
                         borderColor: '#ffffff',
                         hoverOffset: 6
@@ -547,7 +547,7 @@ const appUI = (function () {
                     datasets: [{
                         label: 'Ortalama Fiyat',
                         data: [196, 124, 99, 78, 73],
-                        backgroundColor: ['#5C3D2E', '#795234', '#A67B5B', '#C49A45', '#E0C097'],
+                        backgroundColor: ['#C69B7B', '#D4A373', '#E6CCB2', '#EDE0D4', '#FAEDCD'],
                         borderRadius: 6,
                         barThickness: 12
                     }]
@@ -672,7 +672,7 @@ const appUI = (function () {
                     datasets: [{
                         label: 'Gecelik Ortalama Fiyat ($)',
                         data: [196, 124, 99, 78, 73],
-                        backgroundColor: ['#5C3D2E', '#795234', '#A67B5B', '#C49A45', '#E0C097'],
+                        backgroundColor: ['#C69B7B', '#D4A373', '#E6CCB2', '#EDE0D4', '#FAEDCD'],
                         borderRadius: 8
                     }]
                 },
@@ -697,7 +697,7 @@ const appUI = (function () {
                     labels: ['Entire Home / Apt', 'Private Room', 'Shared Room'],
                     datasets: [{
                         data: [25604, 21054, 2237],
-                        backgroundColor: ['#6F4E37', '#A67B5B', '#E0C097'],
+                        backgroundColor: ['#C69B7B', '#E6CCB2', '#FAEDCD'],
                         borderWidth: 2,
                         borderColor: '#ffffff'
                     }]
