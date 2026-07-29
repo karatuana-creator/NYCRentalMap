@@ -44,6 +44,9 @@
                     Favorilerim <span class="fav-count-badge" id="navFavBadge">0</span>
                 </a>
                 <a class="nav-item" href="javascript:void(0)" onclick="appUI.switchTab('compare')">Karşılaştır</a>
+                <a class="nav-item ai-nav-item" href="javascript:void(0)" onclick="appUI.openAiModal()" style="font-weight:700; color:#8b5cf6;">
+                    <i class="fa-solid fa-wand-magic-sparkles" style="color:#8b5cf6;"></i> AI Asistan
+                </a>
             </nav>
         </div>
 
@@ -509,6 +512,50 @@
                     <input type="email" id="profileInputEmail" class="custom-input-lg" value="tuana.kara@example.com" required />
                 </div>
                 <button type="submit" class="btn-primary-coral w-100 btn-lg" style="padding:0.85rem; font-weight:800; font-size:1rem;"><i class="fa-solid fa-floppy-disk"></i> Değişiklikleri Kaydet</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Floating AI Assistant FAB -->
+    <button type="button" class="ai-fab-btn" onclick="appUI.openAiModal()" title="AI Akıllı Asistan & Veri Analisti">
+        <div class="ai-fab-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+        <span class="ai-fab-label">AI Akıllı Asistan</span>
+    </button>
+
+    <!-- AI Assistant Chat Modal -->
+    <div class="user-modal-overlay" id="aiModalOverlay" onclick="if(event.target===this) appUI.closeAiModal()">
+        <div class="user-modal-card ai-modal-card">
+            <button type="button" class="modal-close-btn" onclick="appUI.closeAiModal()"><i class="fa-solid fa-xmark"></i></button>
+            
+            <div class="ai-modal-header">
+                <div class="ai-avatar-badge"><i class="fa-solid fa-brain"></i></div>
+                <div>
+                    <h3 class="ai-modal-title">NYC Rental AI Asistan ✨</h3>
+                    <p class="ai-modal-sub">Veri Analisti & Akıllı Gayrimenkul Rehberi</p>
+                </div>
+            </div>
+
+            <div class="ai-prompt-chips">
+                <button type="button" class="chip-btn" onclick="appUI.sendAiQuickPrompt('Brooklyn\'de ortalamanın altında fiyatlı evleri göster.')">💡 Brooklyn ortalama altı evler</button>
+                <button type="button" class="chip-btn" onclick="appUI.sendAiQuickPrompt('Yatırım için en uygun mahalle hangisi?')">📈 Yatırım için en uygun mahalle?</button>
+                <button type="button" class="chip-btn" onclick="appUI.sendAiQuickPrompt('Manhattan\'da en yüksek puanlı evleri listele.')">⭐ Manhattan 4.8+ puanlı evler</button>
+                <button type="button" class="chip-btn" onclick="appUI.sendAiQuickPrompt('100$ altı gecelik konaklama yerleri.')">💰 100$ altı bütçe dostu evler</button>
+            </div>
+
+            <div class="ai-chat-body" id="aiChatBody">
+                <div class="ai-msg ai-msg-bot">
+                    <div class="ai-msg-avatar"><i class="fa-solid fa-robot"></i></div>
+                    <div class="ai-msg-content">
+                        Merhaba! Ben New York kiralama piyasası veri analisti AI asistanınızım. 👋<br><br>
+                        Veritabanımızdaki <strong>48.895 konaklama seçeneği</strong> üzerinden canlı sorgulama yapabilir, bölgesel fiyat analizleri alabilir veya yatırım tavsiyesi isteyebilirsiniz.<br><br>
+                        <em>Örnek: "Brooklyn'de ortalamanın altında evleri göster" veya "Yatırım için en uygun mahalle hangisi?"</em>
+                    </div>
+                </div>
+            </div>
+
+            <form class="ai-chat-input-area" onsubmit="event.preventDefault(); appUI.submitAiQuery();">
+                <input type="text" id="aiInputText" class="ai-chat-input" placeholder="AI Asistan'a sorun (örn: Brooklyn ortalama altı evler)..." autocomplete="off" />
+                <button type="submit" class="ai-send-btn" title="Gönder"><i class="fa-solid fa-paper-plane"></i></button>
             </form>
         </div>
     </div>
