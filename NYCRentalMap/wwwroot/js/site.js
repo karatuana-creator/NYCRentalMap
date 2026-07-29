@@ -51,16 +51,47 @@ const appUI = (function () {
         }
     }
 
+    function syncFavoriteUI() {
+        const count = favoriteIds.size;
+        
+        // 1. Update all count badges across the layout
+        const navBadge = document.getElementById('navFavBadge');
+        if (navBadge) navBadge.textContent = count;
+
+        const drawerCount = document.getElementById('favCountTxt');
+        if (drawerCount) drawerCount.textContent = count;
+
+        const pageTotal = document.getElementById('favPageTotalCount');
+        if (pageTotal) pageTotal.textContent = count + ' Ev';
+
+        const profileCount = document.getElementById('profileFavCount');
+        if (profileCount) profileCount.textContent = count;
+
+        // 2. Update all heart buttons on listing cards in DOM
+        document.querySelectorAll('.fav-btn, .btn-fav').forEach(btn => {
+            const onclickAttr = btn.getAttribute('onclick') || '';
+            const match = onclickAttr.match(/toggleFavorite\s*\(\s*(\d+)/);
+            if (match && match[1]) {
+                const id = Number(match[1]);
+                const isFav = favoriteIds.has(id);
+                if (isFav) {
+                    btn.classList.add('active');
+                    const icon = btn.querySelector('i');
+                    if (icon) icon.className = 'fa-solid fa-heart';
+                } else {
+                    btn.classList.remove('active');
+                    const icon = btn.querySelector('i');
+                    if (icon) icon.className = 'fa-regular fa-heart';
+                }
+            }
+        });
+    }
+
     function toggleFavorite(id, btnElement) {
         const numId = Number(id);
         if (favoriteIds.has(numId)) {
             favoriteIds.delete(numId);
             delete favoriteItemsMap[numId];
-            if (btnElement) {
-                btnElement.classList.remove('active');
-                const icon = btnElement.querySelector('i');
-                if (icon) icon.className = 'fa-regular fa-heart';
-            }
         } else {
             favoriteIds.add(numId);
             const foundItem = currentListingsData.find(x => Number(x.id) === numId) || 
@@ -68,13 +99,9 @@ const appUI = (function () {
             if (foundItem) {
                 favoriteItemsMap[numId] = foundItem;
             }
-            if (btnElement) {
-                btnElement.classList.add('active');
-                const icon = btnElement.querySelector('i');
-                if (icon) icon.className = 'fa-solid fa-heart';
-            }
         }
         saveFavoritesToStorage();
+        syncFavoriteUI();
         renderFavoritesDrawer();
         renderFavoritesPage();
         renderComparePage();
@@ -280,6 +307,7 @@ const appUI = (function () {
         favoriteIds.clear();
         favoriteItemsMap = {};
         saveFavoritesToStorage();
+        syncFavoriteUI();
         renderFavoritesDrawer();
         renderFavoritesPage();
         renderComparePage();
@@ -334,6 +362,7 @@ const appUI = (function () {
     // ── Document Ready Handler ──
     document.addEventListener("DOMContentLoaded", function () {
         loadFavoritesFromStorage();
+        syncFavoriteUI();
         initMap();
         initCharts();
         bindEvents();
@@ -840,6 +869,7 @@ const appUI = (function () {
                 saveFavoritesToStorage();
                 updateStats(stats);
                 renderListingsGrid(listings);
+                syncFavoriteUI();
                 renderPagination(pagination);
                 updateMapMarkers(mapMarkers && mapMarkers.length > 0 ? mapMarkers : listings);
                 renderPopularWidget(popularListings);
