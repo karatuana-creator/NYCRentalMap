@@ -297,6 +297,9 @@ const appUI = (function () {
         initCharts();
         bindEvents();
         fetchData();
+        renderFavoritesPage();
+        renderComparePage();
+        initScrollSpy();
         // Load all DB property pins on map (independent of filters)
         setTimeout(loadAllMapMarkers, 500);
     });
@@ -1119,93 +1122,97 @@ const appUI = (function () {
         }
     }
 
+    let isScrollSpyLock = false;
+
     function switchTab(tabName) {
-        const activeLink = document.querySelector(`.nav-item[onclick*="${tabName}"]`);
-        const isAlreadyActive = activeLink && activeLink.classList.contains('active');
-
-        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-
-        const exploreSec = document.getElementById('exploreSection');
-        const exploreDetail = document.getElementById('exploreDetailView');
-        const statSec = document.getElementById('statisticsSection');
         const mapContainer = document.getElementById('mapSectionContainer');
 
         if (tabName === 'map') {
+            const mapLink = document.querySelector(`.nav-item[onclick*="map"]`);
+            const isAlreadyActive = mapLink && mapLink.classList.contains('active');
             if (isAlreadyActive && mapContainer && mapContainer.classList.contains('expanded')) {
                 toggleMapExpand(false);
                 const homeLink = document.querySelector(`.nav-item[onclick*="home"]`);
                 if (homeLink) homeLink.classList.add('active');
             } else {
-                if (activeLink) activeLink.classList.add('active');
-                if (exploreSec) exploreSec.style.display = 'none';
-                if (exploreDetail) exploreDetail.style.display = 'none';
-                if (statSec) statSec.style.display = 'none';
                 toggleMapExpand(true);
             }
-        } else if (tabName === 'explore') {
-            if (activeLink) activeLink.classList.add('active');
-            if (mapContainer && mapContainer.classList.contains('expanded')) {
-                toggleMapExpand(false);
-            }
-            if (exploreDetail) exploreDetail.style.display = 'none';
-            if (statSec) statSec.style.display = 'none';
-            if (exploreSec) exploreSec.style.display = 'block';
-            exploreSec?.scrollIntoView({ behavior: 'smooth' });
-        } else if (tabName === 'statistics') {
-            if (activeLink) activeLink.classList.add('active');
-            if (mapContainer && mapContainer.classList.contains('expanded')) {
-                toggleMapExpand(false);
-            }
-            if (exploreSec) exploreSec.style.display = 'none';
-            if (exploreDetail) exploreDetail.style.display = 'none';
-            const favSec = document.getElementById('favoritesSection');
-            if (favSec) favSec.style.display = 'none';
-            const compSec = document.getElementById('compareSection');
-            if (compSec) compSec.style.display = 'none';
-            if (statSec) statSec.style.display = 'block';
-            statSec?.scrollIntoView({ behavior: 'smooth' });
-        } else if (tabName === 'compare') {
-            if (activeLink) activeLink.classList.add('active');
-            if (mapContainer && mapContainer.classList.contains('expanded')) {
-                toggleMapExpand(false);
-            }
-            if (exploreSec) exploreSec.style.display = 'none';
-            if (exploreDetail) exploreDetail.style.display = 'none';
-            if (statSec) statSec.style.display = 'none';
-            const favSec = document.getElementById('favoritesSection');
-            if (favSec) favSec.style.display = 'none';
-            const compSec = document.getElementById('compareSection');
-            if (compSec) compSec.style.display = 'block';
-            renderComparePage();
-            compSec?.scrollIntoView({ behavior: 'smooth' });
-        } else if (tabName === 'favorites') {
-            if (activeLink) activeLink.classList.add('active');
-            if (mapContainer && mapContainer.classList.contains('expanded')) {
-                toggleMapExpand(false);
-            }
-            if (exploreSec) exploreSec.style.display = 'none';
-            if (exploreDetail) exploreDetail.style.display = 'none';
-            if (statSec) statSec.style.display = 'none';
-            const compSec = document.getElementById('compareSection');
-            if (compSec) compSec.style.display = 'none';
-            const favSec = document.getElementById('favoritesSection');
-            if (favSec) favSec.style.display = 'block';
-            renderFavoritesPage();
-            favSec?.scrollIntoView({ behavior: 'smooth' });
-        } else {
-            if (activeLink) activeLink.classList.add('active');
-            if (mapContainer && mapContainer.classList.contains('expanded')) {
-                toggleMapExpand(false);
-            }
-            if (exploreSec) exploreSec.style.display = 'none';
-            if (exploreDetail) exploreDetail.style.display = 'none';
-            if (statSec) statSec.style.display = 'none';
-            const favSec = document.getElementById('favoritesSection');
-            if (favSec) favSec.style.display = 'none';
-            const compSec = document.getElementById('compareSection');
-            if (compSec) compSec.style.display = 'none';
-            fetchData();
+            return;
         }
+
+        if (mapContainer && mapContainer.classList.contains('expanded')) {
+            toggleMapExpand(false);
+        }
+
+        isScrollSpyLock = true;
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+
+        const targetLink = document.querySelector(`.nav-item[onclick*="${tabName}"]`);
+        if (targetLink) targetLink.classList.add('active');
+
+        if (tabName === 'home') {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else if (tabName === 'explore') {
+            document.getElementById('exploreSection')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else if (tabName === 'statistics') {
+            document.getElementById('statisticsSection')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else if (tabName === 'favorites') {
+            renderFavoritesPage();
+            document.getElementById('favoritesSection')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else if (tabName === 'compare') {
+            renderComparePage();
+            document.getElementById('compareSection')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        setTimeout(() => {
+            isScrollSpyLock = false;
+        }, 850);
+    }
+
+    function initScrollSpy() {
+        window.addEventListener('scroll', function () {
+            if (isScrollSpyLock) return;
+
+            const mapContainer = document.getElementById('mapSectionContainer');
+            if (mapContainer && mapContainer.classList.contains('expanded')) return;
+
+            const scrollY = window.scrollY;
+
+            const secHome = document.querySelector('.kpi-grid');
+            const secExplore = document.getElementById('exploreSection');
+            const secStat = document.getElementById('statisticsSection');
+            const secFav = document.getElementById('favoritesSection');
+            const secComp = document.getElementById('compareSection');
+
+            const sections = [
+                { name: 'home', el: secHome },
+                { name: 'explore', el: secExplore },
+                { name: 'statistics', el: secStat },
+                { name: 'favorites', el: secFav },
+                { name: 'compare', el: secComp }
+            ];
+
+            let activeTab = 'home';
+            const offset = 220;
+
+            sections.forEach(s => {
+                if (s.el) {
+                    const top = s.el.offsetTop - offset;
+                    if (scrollY >= top) {
+                        activeTab = s.name;
+                    }
+                }
+            });
+
+            document.querySelectorAll('.nav-item').forEach(el => {
+                if (!el.classList.contains('filter-toggle-nav-btn') && !el.getAttribute('onclick')?.includes('map')) {
+                    el.classList.remove('active');
+                }
+            });
+
+            const currentLink = document.querySelector(`.nav-item[onclick*="${activeTab}"]`);
+            if (currentLink) currentLink.classList.add('active');
+        });
     }
 
     let activeBoroughModalName = '';
