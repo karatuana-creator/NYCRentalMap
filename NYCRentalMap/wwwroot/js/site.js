@@ -1969,6 +1969,67 @@ const appUI = (function () {
     }
 
     // ── AI SMART ASSISTANT MODULE ──
+    /* ---- AI NAVBAR DROPDOWN ---- */
+    function toggleAiDropdown() {
+        const panel = document.getElementById('aiDropdownPanel');
+        if (!panel) return;
+        panel.classList.toggle('open');
+    }
+
+    function sendAiDropPrompt(promptText) {
+        const chatBody = document.getElementById('aiDropChatBody');
+        const welcome  = document.getElementById('aiDropWelcome');
+        const footer   = document.getElementById('aiDropFooter');
+        if (!chatBody) return;
+
+        if (welcome) welcome.style.display = 'none';
+        chatBody.style.display = 'flex';
+        if (footer) footer.style.display = 'flex';
+        chatBody.innerHTML = '';
+
+        // Question bubble
+        chatBody.insertAdjacentHTML('beforeend',
+            `<div class="ai-question-bubble">${escapeHtml(promptText)}</div>`);
+
+        // Typing dots
+        const typingId = 'dtip_' + Date.now();
+        chatBody.insertAdjacentHTML('beforeend',
+            `<div id="${typingId}" class="ai-answer-bubble" style="padding:0.75rem 1rem;">
+                <div class="ai-typing-dots"><span></span><span></span><span></span></div>
+            </div>`);
+        chatBody.scrollTop = chatBody.scrollHeight;
+
+        setTimeout(() => {
+            const el = document.getElementById(typingId);
+            if (el) el.remove();
+            const resp = processAiQuery(promptText);
+            chatBody.insertAdjacentHTML('beforeend',
+                `<div class="ai-answer-bubble">
+                    <div class="ai-answer-label"><i class="fa-solid fa-brain"></i> NYC Rental AI</div>
+                    ${resp}
+                </div>`);
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }, 700);
+    }
+
+    function resetAiDropdown() {
+        const chatBody = document.getElementById('aiDropChatBody');
+        const welcome  = document.getElementById('aiDropWelcome');
+        const footer   = document.getElementById('aiDropFooter');
+        if (chatBody) { chatBody.innerHTML = ''; chatBody.style.display = 'none'; }
+        if (welcome) welcome.style.display = 'block';
+        if (footer) footer.style.display = 'none';
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        const wrap = document.getElementById('aiNavWrap');
+        const panel = document.getElementById('aiDropdownPanel');
+        if (wrap && panel && panel.classList.contains('open') && !wrap.contains(e.target)) {
+            panel.classList.remove('open');
+        }
+    });
+
     function openAiModal() {
         const modal = document.getElementById('aiModalOverlay');
         if (modal) modal.classList.add('show');
@@ -2155,6 +2216,9 @@ const appUI = (function () {
         resetAiModal: resetAiModal,
         sendAiQuickPrompt: sendAiQuickPrompt,
         submitAiQuery: submitAiQuery,
+        toggleAiDropdown: toggleAiDropdown,
+        sendAiDropPrompt: sendAiDropPrompt,
+        resetAiDropdown: resetAiDropdown,
         renderComparePage: renderComparePage,
         clearFieldError: clearFieldError,
         updateGuestCount: updateGuestCount

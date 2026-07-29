@@ -2827,3 +2827,71 @@ body {
     font-size: 0.71rem;
     color: var(--text-muted);
 }
+
+/* ===========================
+   AI NAVBAR DROPDOWN
+   =========================== */
+
+.ai-nav-dropdown-wrap {
+    position: relative;
+}
+
+.ai-dropdown-panel {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    width: 380px;
+    max-height: 0;
+    overflow: hidden;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.18), 0 0 0 1px rgba(99,102,241,0.1);
+    z-index: 3100;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1),
+                opacity 0.25s ease,
+                transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+    pointer-events: none;
+}
+
+.ai-dropdown-panel.open {
+    max-height: 520px;
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.ai-dropdown-panel .ai-panel-header {
+    padding: 1rem 1.1rem;
+    flex-shrink: 0;
+}
+
+.ai-dropdown-panel .ai-welcome-area {
+    padding: 0.85rem 1.1rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.ai-dropdown-panel .ai-q-card {
+    padding: 0.7rem 0.85rem;
+}
+
+.ai-dropdown-panel .ai-q-card-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+}
+
+.ai-dropdown-panel .ai-chat-area {
+    padding: 1rem 1.1rem;
+    max-height: 300px;
+}
+
+.ai-dropdown-panel .ai-panel-footer {
+    padding: 0.7rem 1.1rem;
+    flex-shrink: 0;
+}
