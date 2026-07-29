@@ -913,13 +913,20 @@ const appUI = (function () {
         let html = '';
         popularListings.forEach((item, idx) => {
             const img = item.imageUrl || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=300&q=80';
+            const rankClass = idx === 0 ? 'rank-1' : (idx === 1 ? 'rank-2' : 'rank-3');
             html += `
-                <div class="popular-item" onclick="appUI.selectPropertyById(${item.id})">
-                    <div class="rank-badge">${idx + 1}</div>
-                    <img src="${img}" class="pop-thumb" alt="${escapeHtml(item.name)}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=300&q=80';" />
-                    <div class="pop-info">
+                <div class="popular-item-pro" onclick="appUI.selectPropertyById(${item.id})">
+                    <div class="rank-badge-pro ${rankClass}">${idx + 1}</div>
+                    <div class="pop-thumb-wrap">
+                        <img src="${img}" class="pop-thumb-pro" alt="${escapeHtml(item.name)}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=300&q=80';" />
+                    </div>
+                    <div class="pop-info-pro">
                         <h5 title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</h5>
-                        <p><i class="fa-solid fa-star icon-star"></i> ${item.rating} • <strong>$${item.price}</strong> / gece</p>
+                        <div class="pop-location">📍 ${escapeHtml(item.neighbourhood || item.borough || 'New York')}, NYC</div>
+                        <div class="pop-meta">
+                            <span><i class="fa-solid fa-star icon-star"></i> ${item.rating || 4.85}</span>
+                            <span class="pop-price">$${item.price} <small>/ gece</small></span>
+                        </div>
                     </div>
                 </div>
             `;
