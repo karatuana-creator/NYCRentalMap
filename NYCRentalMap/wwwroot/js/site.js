@@ -1979,60 +1979,58 @@ const appUI = (function () {
         if (modal) modal.classList.remove('show');
     }
 
-    function sendAiQuickPrompt(promptText) {
-        const input = document.getElementById('aiInputText');
-        if (input) {
-            input.value = promptText;
-            submitAiQuery();
-        }
+    function resetAiModal() {
+        const chatBody = document.getElementById('aiChatBody');
+        const welcomeArea = document.getElementById('aiWelcomeArea');
+        const footer = document.getElementById('aiPanelFooter');
+        if (chatBody) { chatBody.innerHTML = ''; chatBody.style.display = 'none'; }
+        if (welcomeArea) welcomeArea.style.display = 'block';
+        if (footer) footer.style.display = 'none';
     }
 
-    function submitAiQuery() {
-        const input = document.getElementById('aiInputText');
+    function sendAiQuickPrompt(promptText) {
         const chatBody = document.getElementById('aiChatBody');
-        if (!input || !chatBody) return;
+        const welcomeArea = document.getElementById('aiWelcomeArea');
+        const footer = document.getElementById('aiPanelFooter');
+        if (!chatBody) return;
 
-        const text = input.value.trim();
-        if (!text) return;
+        // Switch from welcome screen to chat panel
+        if (welcomeArea) welcomeArea.style.display = 'none';
+        chatBody.style.display = 'flex';
+        if (footer) footer.style.display = 'flex';
+        chatBody.innerHTML = '';
 
-        // Render User Message
-        const userMsgHtml = `
-            <div class="ai-msg ai-msg-user">
-                <div class="ai-msg-avatar"><i class="fa-solid fa-user"></i></div>
-                <div class="ai-msg-content">${escapeHtml(text)}</div>
-            </div>
-        `;
-        chatBody.insertAdjacentHTML('beforeend', userMsgHtml);
-        input.value = '';
-        chatBody.scrollTop = chatBody.scrollHeight;
+        // Show question bubble
+        const qBubble = `<div class="ai-question-bubble">${escapeHtml(promptText)}</div>`;
+        chatBody.insertAdjacentHTML('beforeend', qBubble);
 
-        // Render Typing Indicator
+        // Show typing indicator
         const typingId = 'typing_' + Date.now();
         const typingHtml = `
-            <div class="ai-msg ai-msg-bot" id="${typingId}">
-                <div class="ai-msg-avatar"><i class="fa-solid fa-robot"></i></div>
-                <div class="ai-msg-content"><i class="fa-solid fa-ellipsis fa-beat"></i> Analiz ediliyor...</div>
-            </div>
-        `;
+            <div id="${typingId}" class="ai-answer-bubble" style="padding:0.75rem 1rem;">
+                <div class="ai-typing-dots"><span></span><span></span><span></span></div>
+            </div>`;
         chatBody.insertAdjacentHTML('beforeend', typingHtml);
         chatBody.scrollTop = chatBody.scrollHeight;
 
-        // Process Query with Natural Language Processing Engine
+        // Process and show answer
         setTimeout(() => {
             const typingEl = document.getElementById(typingId);
             if (typingEl) typingEl.remove();
 
-            const botResponse = processAiQuery(text);
-
-            const botMsgHtml = `
-                <div class="ai-msg ai-msg-bot">
-                    <div class="ai-msg-avatar"><i class="fa-solid fa-robot"></i></div>
-                    <div class="ai-msg-content">${botResponse}</div>
-                </div>
-            `;
-            chatBody.insertAdjacentHTML('beforeend', botMsgHtml);
+            const botResponse = processAiQuery(promptText);
+            const answerHtml = `
+                <div class="ai-answer-bubble">
+                    <div class="ai-answer-label"><i class="fa-solid fa-brain"></i> NYC Rental AI</div>
+                    ${botResponse}
+                </div>`;
+            chatBody.insertAdjacentHTML('beforeend', answerHtml);
             chatBody.scrollTop = chatBody.scrollHeight;
-        }, 500);
+        }, 700);
+    }
+
+    function submitAiQuery() {
+        // Legacy function - kept for compatibility
     }
 
     function processAiQuery(query) {
@@ -2154,6 +2152,7 @@ const appUI = (function () {
         openHostModal: openHostModal,
         openAiModal: openAiModal,
         closeAiModal: closeAiModal,
+        resetAiModal: resetAiModal,
         sendAiQuickPrompt: sendAiQuickPrompt,
         submitAiQuery: submitAiQuery,
         renderComparePage: renderComparePage,
