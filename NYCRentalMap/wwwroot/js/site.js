@@ -18,15 +18,44 @@ const appUI = (function () {
         { url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', attribution: '&copy; CARTO Dark' }
     ];
 
-    // Favorites Array
+    // Favorites Array & Persistence
     let favoriteIds = new Set(); // Stores user favourited property IDs
+    let favoriteItemsMap = {};   // Stores property details for offline/page-refresh persistence
     let currentListingsData = [];
     let activeProperty = null;
+
+    function loadFavoritesFromStorage() {
+        try {
+            const storedIds = localStorage.getItem('nyc_rental_favorite_ids');
+            const storedItems = localStorage.getItem('nyc_rental_favorite_items');
+            if (storedIds) {
+                const parsedIds = JSON.parse(storedIds);
+                if (Array.isArray(parsedIds)) {
+                    favoriteIds = new Set(parsedIds.map(Number));
+                }
+            }
+            if (storedItems) {
+                favoriteItemsMap = JSON.parse(storedItems) || {};
+            }
+        } catch (e) {
+            console.error('Favorites loading error:', e);
+        }
+    }
+
+    function saveFavoritesToStorage() {
+        try {
+            localStorage.setItem('nyc_rental_favorite_ids', JSON.stringify(Array.from(favoriteIds)));
+            localStorage.setItem('nyc_rental_favorite_items', JSON.stringify(favoriteItemsMap));
+        } catch (e) {
+            console.error('Favorites saving error:', e);
+        }
+    }
 
     function toggleFavorite(id, btnElement) {
         const numId = Number(id);
         if (favoriteIds.has(numId)) {
             favoriteIds.delete(numId);
+            delete favoriteItemsMap[numId];
             if (btnElement) {
                 btnElement.classList.remove('active');
                 const icon = btnElement.querySelector('i');
@@ -34,13 +63,21 @@ const appUI = (function () {
             }
         } else {
             favoriteIds.add(numId);
+            const foundItem = currentListingsData.find(x => Number(x.id) === numId) || 
+                              (activeProperty && Number(activeProperty.id) === numId ? activeProperty : null);
+            if (foundItem) {
+                favoriteItemsMap[numId] = foundItem;
+            }
             if (btnElement) {
                 btnElement.classList.add('active');
                 const icon = btnElement.querySelector('i');
                 if (icon) icon.className = 'fa-solid fa-heart';
             }
         }
+        saveFavoritesToStorage();
         renderFavoritesDrawer();
+        renderFavoritesPage();
+        renderComparePage();
     }
 
     function renderFavoritesPage() {
@@ -68,7 +105,7 @@ const appUI = (function () {
         let html = '';
 
         favoriteIds.forEach(id => {
-            const p = currentListingsData.find(x => Number(x.id) === Number(id)) || {
+            const p = currentListingsData.find(x => Number(x.id) === Number(id)) || favoriteItemsMap[id] || {
                 id: id,
                 name: 'Harika Konumda Ev #' + id,
                 price: 120,
@@ -241,8 +278,11 @@ const appUI = (function () {
 
     function clearAllFavorites() {
         favoriteIds.clear();
+        favoriteItemsMap = {};
+        saveFavoritesToStorage();
         renderFavoritesDrawer();
         renderFavoritesPage();
+        renderComparePage();
     }
 
     function renderFavoritesDrawer() {
@@ -262,7 +302,7 @@ const appUI = (function () {
 
         let html = '';
         favoriteIds.forEach(id => {
-            const p = currentListingsData.find(x => Number(x.id) === Number(id)) || {
+            const p = currentListingsData.find(x => Number(x.id) === Number(id)) || favoriteItemsMap[id] || {
                 id: id,
                 name: 'Favori Ev #' + id,
                 price: 120,
@@ -293,6 +333,7 @@ const appUI = (function () {
 
     // ── Document Ready Handler ──
     document.addEventListener("DOMContentLoaded", function () {
+        loadFavoritesFromStorage();
         initMap();
         initCharts();
         bindEvents();
@@ -791,6 +832,12 @@ const appUI = (function () {
                 const charts = data.charts || data.Charts || {};
 
                 currentListingsData = listings;
+                listings.forEach(item => {
+                    if (favoriteIds.has(item.id)) {
+                        favoriteItemsMap[item.id] = item;
+                    }
+                });
+                saveFavoritesToStorage();
                 updateStats(stats);
                 renderListingsGrid(listings);
                 renderPagination(pagination);
