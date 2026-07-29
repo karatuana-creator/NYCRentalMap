@@ -949,7 +949,7 @@
     </div>
 
     <!-- 3. RIGHT PANEL: MAP & FAVORITES OVERLAY -->
-    <section class="map-section-container" id="mapSectionContainer">
+    <section class="map-section-container" id="mapSectionContainer" onclick="if(!this.classList.contains('expanded')) appUI.toggleMapExpand(true)">
 
         <!-- Interactive Map -->
         <div id="map" class="map-view"></div>

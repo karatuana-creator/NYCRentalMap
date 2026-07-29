@@ -1440,9 +1440,14 @@ const appUI = (function () {
             if (isExpanded) {
                 icon.className = 'fa-solid fa-compress';
                 container.setAttribute('title', 'Haritayı Küçült');
+                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+                const mapLink = document.querySelector(`.nav-item[onclick*="map"]`);
+                if (mapLink) mapLink.classList.add('active');
             } else {
                 icon.className = 'fa-solid fa-expand';
-                container.setAttribute('title', 'Haritayı Büyüt');
+                container.setAttribute('title', 'Haritayı Büyüt (Tam Ekran)');
+                const homeLink = document.querySelector(`.nav-item[onclick*="home"]`);
+                if (homeLink) homeLink.classList.add('active');
             }
         }
 
