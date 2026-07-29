@@ -1,0 +1,21 @@
+## Ignore Visual Studio / .NET build outputs
+[Bb]in/
+[Oo]bj/
+.vs/
+.vscode/
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+*.pidb
+*.appx
+*.appxbundle
+*.appxupload
+
+## Ignore log files & temporary files
+*.log
+*.tmp

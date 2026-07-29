@@ -1,0 +1,991 @@
+@{
+    ViewData["Title"] = "New York Ev Kiraları Analiz Dashboardu";
+}
+
+<div class="dashboard-grid">
+
+    <!-- 1. LEFT SIDEBAR: FILTERS & POPULAR WIDGET -->
+    <aside class="sidebar-panel">
+        <div class="filter-card">
+            <div class="filter-header">
+                <h3>Filtreler</h3>
+                <button type="button" class="btn-text-danger" id="btnClearAllFilters" onclick="appUI.clearFilters()">Temizle</button>
+            </div>
+
+            <!-- Price Range -->
+            <div class="filter-group">
+                <label class="filter-label">Fiyat Aralığı (gecelik)</label>
+                <div class="range-display">
+                    <span id="minPriceVal">$0</span>
+                    <span id="maxPriceVal">$10.000+</span>
+                </div>
+                <div class="range-slider-box">
+                    <input type="range" id="priceRangeInput" min="0" max="10000" step="50" value="10000" oninput="appUI.updatePriceLabel(this.value)" />
+                </div>
+                <div class="range-badge-val" id="rangeBadgeText">$10 - $10.000+</div>
+            </div>
+
+            <!-- Room Types -->
+            <div class="filter-group">
+                <label class="filter-label">Oda Tipi</label>
+                <div class="checkbox-list">
+                    <label class="custom-checkbox">
+                        <input type="checkbox" id="chkRoomAll" checked onchange="appUI.toggleAllRoomTypes(this)" />
+                        <span class="lbl-text">Tümü</span>
+                    </label>
+                    <label class="custom-checkbox">
+                        <input type="checkbox" class="chk-room" value="Entire home/apt" checked onchange="appUI.onRoomTypeChange()" />
+                        <span class="lbl-text">Entire Home (Tüm Ev)</span>
+                    </label>
+                    <label class="custom-checkbox">
+                        <input type="checkbox" class="chk-room" value="Private room" checked onchange="appUI.onRoomTypeChange()" />
+                        <span class="lbl-text">Private Room (Özel Oda)</span>
+                    </label>
+                    <label class="custom-checkbox">
+                        <input type="checkbox" class="chk-room" value="Shared room" checked onchange="appUI.onRoomTypeChange()" />
+                        <span class="lbl-text">Shared Room (Paylaşımlı Oda)</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Neighborhood -->
+            <div class="filter-group">
+                <label class="filter-label">Mahalle</label>
+                <select id="selBorough" class="custom-select" onchange="appUI.fetchData()">
+                    <option value="">Tümü</option>
+                    <option value="Manhattan">Manhattan</option>
+                    <option value="Brooklyn">Brooklyn</option>
+                    <option value="Queens">Queens</option>
+                    <option value="Bronx">Bronx</option>
+                    <option value="Staten Island">Staten Island</option>
+                </select>
+            </div>
+
+            <!-- Minimum Nights -->
+            <div class="filter-group">
+                <label class="filter-label">Minimum Gece</label>
+                <select id="selMinNights" class="custom-select" onchange="appUI.fetchData()">
+                    <option value="">Tümü</option>
+                    <option value="1">1 Gece</option>
+                    <option value="2">2 Gece</option>
+                    <option value="3">3+ Gece</option>
+                    <option value="7">7+ Gece</option>
+                    <option value="30">30+ Gece</option>
+                </select>
+            </div>
+
+            <!-- Reviews Range -->
+            <div class="filter-group">
+                <label class="filter-label">Yorum Sayısı</label>
+                <div class="range-slider-box">
+                    <input type="range" id="reviewsRangeInput" min="0" max="500" step="5" value="0" oninput="appUI.updateReviewsLabel(this.value)" />
+                </div>
+                <div class="range-badge-val" id="reviewsBadgeText">0 - 1000+</div>
+            </div>
+
+            <!-- Guests & Pets Counter Breakdown (Airbnb Style) -->
+            <div class="filter-group">
+                <label class="filter-label" style="display:flex; justify-content:space-between; align-items:center;">
+                    <span>Misafirler & Kişiler</span>
+                    <small style="color:var(--accent-red); font-weight:700;" id="totalGuestsCountTxt">0 Misafir</small>
+                </label>
+                
+                <div class="guest-counters-box" style="background:var(--bg-input); border:1px solid var(--border-color); border-radius:12px; padding:0.75rem; display:flex; flex-direction:column; gap:0.6rem;">
+                    <!-- Adults -->
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div style="font-weight:700; font-size:0.8rem; color:var(--text-main);">Yetişkinler</div>
+                            <div style="font-size:0.68rem; color:var(--text-muted);">13 yaş ve üstü</div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:0.5rem;">
+                            <button type="button" class="btn-counter-sm" onclick="appUI.updateGuestCount('adults', -1)">-</button>
+                            <span style="font-weight:800; font-size:0.85rem; width:16px; text-align:center;" id="cntAdults">0</span>
+                            <button type="button" class="btn-counter-sm" onclick="appUI.updateGuestCount('adults', 1)">+</button>
+                        </div>
+                    </div>
+
+                    <!-- Children -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px dashed var(--border-color); padding-top:0.4rem;">
+                        <div>
+                            <div style="font-weight:700; font-size:0.8rem; color:var(--text-main);">Çocuklar</div>
+                            <div style="font-size:0.68rem; color:var(--text-muted);">2-12 yaş</div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:0.5rem;">
+                            <button type="button" class="btn-counter-sm" onclick="appUI.updateGuestCount('children', -1)">-</button>
+                            <span style="font-weight:800; font-size:0.85rem; width:16px; text-align:center;" id="cntChildren">0</span>
+                            <button type="button" class="btn-counter-sm" onclick="appUI.updateGuestCount('children', 1)">+</button>
+                        </div>
+                    </div>
+
+                    <!-- Babies -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px dashed var(--border-color); padding-top:0.4rem;">
+                        <div>
+                            <div style="font-weight:700; font-size:0.8rem; color:var(--text-main);">Bebekler</div>
+                            <div style="font-size:0.68rem; color:var(--text-muted);">2 yaş altı</div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:0.5rem;">
+                            <button type="button" class="btn-counter-sm" onclick="appUI.updateGuestCount('babies', -1)">-</button>
+                            <span style="font-weight:800; font-size:0.85rem; width:16px; text-align:center;" id="cntBabies">0</span>
+                            <button type="button" class="btn-counter-sm" onclick="appUI.updateGuestCount('babies', 1)">+</button>
+                        </div>
+                    </div>
+
+                    <!-- Pets -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px dashed var(--border-color); padding-top:0.4rem;">
+                        <div>
+                            <div style="font-weight:700; font-size:0.8rem; color:var(--text-main);">Evcil hayvanlar</div>
+                            <div style="font-size:0.65rem; color:var(--text-muted);">Evcil hayvan dostu</div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:0.5rem;">
+                            <button type="button" class="btn-counter-sm" onclick="appUI.updateGuestCount('pets', -1)">-</button>
+                            <span style="font-weight:800; font-size:0.85rem; width:16px; text-align:center;" id="cntPets">0</span>
+                            <button type="button" class="btn-counter-sm" onclick="appUI.updateGuestCount('pets', 1)">+</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Keyword -->
+            <div class="filter-group">
+                <label class="filter-label">Anahtar Kelime</label>
+                <div class="input-with-btn-group">
+                    <input type="text" id="keywordInput" class="custom-input" placeholder="Semt, ev adı, açıklama..." onkeyup="if(event.key==='Enter') appUI.fetchData()" />
+                    <button type="button" class="btn-search-inline" title="Hızlı Ara" onclick="appUI.fetchData()"><i class="fa-solid fa-magnifying-glass"></i></button>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="button" class="btn-primary-coral w-100 btn-filter-submit" id="btnFilterSubmit" onclick="appUI.fetchData(1, true)"><i class="fa-solid fa-magnifying-glass"></i> Ara & Filtrele</button>
+        </div>
+
+        <!-- Widget: En Popüler Evler (Pro Card Version) -->
+        <div class="popular-widget-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
+                <h4 class="widget-title" style="margin:0; font-size:0.95rem; font-weight:800; display:flex; align-items:center; gap:0.4rem;">
+                    <i class="fa-solid fa-fire" style="color: var(--accent-red);"></i> <span>En Popüler İlanlar</span>
+                </h4>
+                <span style="font-size:0.68rem; background:rgba(244,63,94,0.15); color:var(--accent-red); font-weight:700; padding:2px 8px; border-radius:12px;">Top 3</span>
+            </div>
+            
+            <div class="popular-list" id="popularListContainer">
+                <div class="popular-item-pro" onclick="appUI.selectPropertyById(1)">
+                    <div class="rank-badge-pro rank-1">1</div>
+                    <div class="pop-thumb-wrap">
+                        <img src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=300&q=80" class="pop-thumb-pro" alt="Lüks Daire" />
+                    </div>
+                    <div class="pop-info-pro">
+                        <h5 title="Lüks Manhattan Dairesi">Lüks Manhattan Dairesi</h5>
+                        <div class="pop-location">📍 Manhattan, NYC</div>
+                        <div class="pop-meta">
+                            <span><i class="fa-solid fa-star icon-star"></i> 4.98</span>
+                            <span class="pop-price">$350 <small>/ gece</small></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="popular-item-pro" onclick="appUI.selectPropertyById(2)">
+                    <div class="rank-badge-pro rank-2">2</div>
+                    <div class="pop-thumb-wrap">
+                        <img src="https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=300&q=80" class="pop-thumb-pro" alt="Harlem Ev" />
+                    </div>
+                    <div class="pop-info-pro">
+                        <h5 title="Harlem'de Mükemmel Ev">Harlem'de Mükemmel Ev</h5>
+                        <div class="pop-location">📍 Harlem, Manhattan</div>
+                        <div class="pop-meta">
+                            <span><i class="fa-solid fa-star icon-star"></i> 4.95</span>
+                            <span class="pop-price">$180 <small>/ gece</small></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="popular-item-pro" onclick="appUI.selectPropertyById(3)">
+                    <div class="rank-badge-pro rank-3">3</div>
+                    <div class="pop-thumb-wrap">
+                        <img src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=300&q=80" class="pop-thumb-pro" alt="Brooklyn Loft" />
+                    </div>
+                    <div class="pop-info-pro">
+                        <h5 title="Brooklyn Loft">Brooklyn Loft</h5>
+                        <div class="pop-location">📍 Williamsburg, Brooklyn</div>
+                        <div class="pop-meta">
+                            <span><i class="fa-solid fa-star icon-star"></i> 4.93</span>
+                            <span class="pop-price">$160 <small>/ gece</small></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button type="button" class="btn-popular-see-all" onclick="appUI.switchTab('explore')">
+                <span>Tüm Popüler Evleri Gör</span> <i class="fa-solid fa-chevron-right"></i>
+            </button>
+        </div>
+    </aside>
+
+    <!-- 2. CENTER MAIN DASHBOARD: KPIS, CHARTS, LISTINGS, BOTTOM CHARTS -->
+    <div class="center-content">
+
+        <!-- 6 KPI Metric Cards Row -->
+        <section class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-icon icon-pink"><i class="fa-solid fa-house"></i></div>
+                <div class="kpi-details">
+                    <span class="kpi-title">Toplam Ev</span>
+                    <h3 class="kpi-val" id="kpiTotalHouses">48.895</h3>
+                    <small class="kpi-sub">%100 veri seti</small>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon icon-green"><i class="fa-solid fa-dollar-sign"></i></div>
+                <div class="kpi-details">
+                    <span class="kpi-title">Ortalama Fiyat</span>
+                    <h3 class="kpi-val" id="kpiAvgPrice">$152</h3>
+                    <small class="kpi-sub">Gecelik ortalama</small>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon icon-orange"><i class="fa-solid fa-crown"></i></div>
+                <div class="kpi-details">
+                    <span class="kpi-title">En Pahalı Ev</span>
+                    <h3 class="kpi-val" id="kpiMaxPrice">$10.000+</h3>
+                    <small class="kpi-sub">Gecelik fiyat</small>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon icon-mint"><i class="fa-solid fa-tag"></i></div>
+                <div class="kpi-details">
+                    <span class="kpi-title">En Ucuz Ev</span>
+                    <h3 class="kpi-val" id="kpiMinPrice">$10</h3>
+                    <small class="kpi-sub">Gecelik fiyat</small>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon icon-blue"><i class="fa-solid fa-comments"></i></div>
+                <div class="kpi-details">
+                    <span class="kpi-title">Toplam Yorum</span>
+                    <h3 class="kpi-val" id="kpiTotalReviews">1.52M</h3>
+                    <small class="kpi-sub">Tüm evler için</small>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon icon-purple"><i class="fa-solid fa-star"></i></div>
+                <div class="kpi-details">
+                    <span class="kpi-title">Ortalama Puan</span>
+                    <h3 class="kpi-val" id="kpiAvgRating">4.62</h3>
+                    <small class="kpi-sub">5 üzerinden</small>
+                </div>
+            </div>
+        </section>
+
+        <!-- Charts Row 1: Donut + Bar Chart -->
+        <section class="charts-row-1">
+            <div class="chart-card">
+                <h4 class="chart-title">Oda Tipine Göre Dağılım</h4>
+                <div class="donut-chart-wrapper">
+                    <div class="canvas-container">
+                        <canvas id="roomTypeDonutChart"></canvas>
+                    </div>
+                    <div class="donut-legend" id="donutLegendContainer">
+                        <div class="legend-row">
+                            <span class="dot dot-coral"></span>
+                            <span class="legend-name">Entire Home</span>
+                            <strong class="legend-pct">%52 <small>(25.604)</small></strong>
+                        </div>
+                        <div class="legend-row">
+                            <span class="dot dot-blue"></span>
+                            <span class="legend-name">Private Room</span>
+                            <strong class="legend-pct">%43 <small>(21.054)</small></strong>
+                        </div>
+                        <div class="legend-row">
+                            <span class="dot dot-yellow"></span>
+                            <span class="legend-name">Shared Room</span>
+                            <strong class="legend-pct">%5 <small>(2.237)</small></strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h4 class="chart-title">Mahallelere Göre Ortalama Fiyat</h4>
+                <div class="bar-chart-wrapper">
+                    <canvas id="boroughBarChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Listings Section: 4x2 Grid of Cards -->
+        <section class="listings-section">
+            <div class="listings-header">
+                <h3 class="section-heading">Tüm Evler <span class="count-txt" id="listingsCountTxt">(48.895 sonuç)</span></h3>
+                <div class="sort-box">
+                    <label>Sırala:</label>
+                    <select id="selSortBy" class="custom-select-sm" onchange="appUI.fetchData()">
+                        <option value="recommended">Önerilen</option>
+                        <option value="price_asc">Fiyat: Düşükten Yükseğe</option>
+                        <option value="price_desc">Fiyat: Yüksekten Düşüğe</option>
+                        <option value="rating_desc">En Yüksek Puanlı</option>
+                        <option value="reviews_desc">En Çok Yorum Alan</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 4x2 Grid (8 Ev) -->
+            <div class="listings-grid" id="listingsGrid">
+                <div class="property-card no-img-card" onclick="appUI.selectPropertyById(28611)">
+                    <div class="card-text-header">
+                        <div class="card-price-badge-inline">$120 <small>/ gece</small></div>
+                        <button class="fav-btn" onclick="event.stopPropagation(); appUI.toggleFavorite(28611, this)"><i class="fa-regular fa-heart"></i></button>
+                    </div>
+                    <div class="card-body-content">
+                        <h4 class="prop-title" title="Clean and cozy room in Greenwich Village">Clean and cozy room in Greenwich Village</h4>
+                        <p class="prop-loc">📍 Manhattan, New York</p>
+                        <div class="prop-amenities">
+                            <span><i class="fa-solid fa-house-chimney"></i> Entire home/apt</span>
+                            <span><i class="fa-solid fa-user"></i> Ev Sahibi: John</span>
+                        </div>
+                        <div class="prop-rating">
+                            <i class="fa-solid fa-star icon-star"></i> 4.89 <span style="font-weight:400; color:var(--text-muted);">(120 yorum)</span>
+                            <span class="min-nights-badge">🌙 Min. 1 Gece</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="property-card no-img-card" onclick="appUI.selectPropertyById(28242)">
+                    <div class="card-text-header">
+                        <div class="card-price-badge-inline">$65 <small>/ gece</small></div>
+                        <button class="fav-btn" onclick="event.stopPropagation(); appUI.toggleFavorite(28242, this)"><i class="fa-regular fa-heart"></i></button>
+                    </div>
+                    <div class="card-body-content">
+                        <h4 class="prop-title" title="Cozy room in Greenwich Village">Cozy room in Greenwich Village</h4>
+                        <p class="prop-loc">📍 Brooklyn, New York</p>
+                        <div class="prop-amenities">
+                            <span><i class="fa-solid fa-house-chimney"></i> Private room</span>
+                            <span><i class="fa-solid fa-user"></i> Ev Sahibi: Sarah</span>
+                        </div>
+                        <div class="prop-rating">
+                            <i class="fa-solid fa-star icon-star"></i> 4.75 <span style="font-weight:400; color:var(--text-muted);">(89 yorum)</span>
+                            <span class="min-nights-badge">🌙 Min. 1 Gece</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="property-card no-img-card" onclick="appUI.selectPropertyById(29012)">
+                    <div class="card-text-header">
+                        <div class="card-price-badge-inline">$80 <small>/ gece</small></div>
+                        <button class="fav-btn" onclick="event.stopPropagation(); appUI.toggleFavorite(29012, this)"><i class="fa-regular fa-heart"></i></button>
+                    </div>
+                    <div class="card-body-content">
+                        <h4 class="prop-title" title="Cozy Room in Bushwick">Cozy Room in Bushwick</h4>
+                        <p class="prop-loc">📍 Brooklyn, New York</p>
+                        <div class="prop-amenities">
+                            <span><i class="fa-solid fa-house-chimney"></i> Private room</span>
+                            <span><i class="fa-solid fa-user"></i> Ev Sahibi: Alex</span>
+                        </div>
+                        <div class="prop-rating">
+                            <i class="fa-solid fa-star icon-star"></i> 4.68 <span style="font-weight:400; color:var(--text-muted);">(56 yorum)</span>
+                            <span class="min-nights-badge">🌙 Min. 2 Gece</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="property-card no-img-card" onclick="appUI.selectPropertyById(31054)">
+                    <div class="card-text-header">
+                        <div class="card-price-badge-inline">$250 <small>/ gece</small></div>
+                        <button class="fav-btn" onclick="event.stopPropagation(); appUI.toggleFavorite(31054, this)"><i class="fa-regular fa-heart"></i></button>
+                    </div>
+                    <div class="card-body-content">
+                        <h4 class="prop-title" title="Studio in Upper East Side">Studio in Upper East Side</h4>
+                        <p class="prop-loc">📍 Manhattan, New York</p>
+                        <div class="prop-amenities">
+                            <span><i class="fa-solid fa-house-chimney"></i> Entire home/apt</span>
+                            <span><i class="fa-solid fa-user"></i> Ev Sahibi: Michael</span>
+                        </div>
+                        <div class="prop-rating">
+                            <i class="fa-solid fa-star icon-star"></i> 4.92 <span style="font-weight:400; color:var(--text-muted);">(200 yorum)</span>
+                            <span class="min-nights-badge">🌙 Min. 3 Gece</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="property-card no-img-card" onclick="appUI.selectPropertyById(32100)">
+                    <div class="card-text-header">
+                        <div class="card-price-badge-inline">$90 <small>/ gece</small></div>
+                        <button class="fav-btn" onclick="event.stopPropagation(); appUI.toggleFavorite(32100, this)"><i class="fa-regular fa-heart"></i></button>
+                    </div>
+                    <div class="card-body-content">
+                        <h4 class="prop-title" title="Queens'de rahat daire">Queens'de rahat daire</h4>
+                        <p class="prop-loc">📍 Queens, New York</p>
+                        <div class="prop-amenities">
+                            <span><i class="fa-solid fa-house-chimney"></i> Entire home/apt</span>
+                            <span><i class="fa-solid fa-user"></i> Ev Sahibi: Emily</span>
+                        </div>
+                        <div class="prop-rating">
+                            <i class="fa-solid fa-star icon-star"></i> 4.55 <span style="font-weight:400; color:var(--text-muted);">(45 yorum)</span>
+                            <span class="min-nights-badge">🌙 Min. 2 Gece</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="property-card no-img-card" onclick="appUI.selectPropertyById(33410)">
+                    <div class="card-text-header">
+                        <div class="card-price-badge-inline">$55 <small>/ gece</small></div>
+                        <button class="fav-btn" onclick="event.stopPropagation(); appUI.toggleFavorite(33410, this)"><i class="fa-regular fa-heart"></i></button>
+                    </div>
+                    <div class="card-body-content">
+                        <h4 class="prop-title" title="Özel oda - Brooklyn">Özel oda - Brooklyn</h4>
+                        <p class="prop-loc">📍 Brooklyn, New York</p>
+                        <div class="prop-amenities">
+                            <span><i class="fa-solid fa-house-chimney"></i> Private room</span>
+                            <span><i class="fa-solid fa-user"></i> Ev Sahibi: David</span>
+                        </div>
+                        <div class="prop-rating">
+                            <i class="fa-solid fa-star icon-star"></i> 4.60 <span style="font-weight:400; color:var(--text-muted);">(67 yorum)</span>
+                            <span class="min-nights-badge">🌙 Min. 1 Gece</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="property-card no-img-card" onclick="appUI.selectPropertyById(34590)">
+                    <div class="card-text-header">
+                        <div class="card-price-badge-inline">$200 <small>/ gece</small></div>
+                        <button class="fav-btn" onclick="event.stopPropagation(); appUI.toggleFavorite(34590, this)"><i class="fa-regular fa-heart"></i></button>
+                    </div>
+                    <div class="card-body-content">
+                        <h4 class="prop-title" title="Manhattan'da balkonlu ev">Manhattan'da balkonlu ev</h4>
+                        <p class="prop-loc">📍 Manhattan, New York</p>
+                        <div class="prop-amenities">
+                            <span><i class="fa-solid fa-house-chimney"></i> Entire home/apt</span>
+                            <span><i class="fa-solid fa-user"></i> Ev Sahibi: Jessica</span>
+                        </div>
+                        <div class="prop-rating">
+                            <i class="fa-solid fa-star icon-star"></i> 4.80 <span style="font-weight:400; color:var(--text-muted);">(123 yorum)</span>
+                            <span class="min-nights-badge">🌙 Min. 2 Gece</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="property-card no-img-card" onclick="appUI.selectPropertyById(35120)">
+                    <div class="card-text-header">
+                        <div class="card-price-badge-inline">$110 <small>/ gece</small></div>
+                        <button class="fav-btn" onclick="event.stopPropagation(); appUI.toggleFavorite(35120, this)"><i class="fa-regular fa-heart"></i></button>
+                    </div>
+                    <div class="card-body-content">
+                        <h4 class="prop-title" title="Bronx'ta şirin daire">Bronx'ta şirin daire</h4>
+                        <p class="prop-loc">📍 Bronx, New York</p>
+                        <div class="prop-amenities">
+                            <span><i class="fa-solid fa-house-chimney"></i> Private room</span>
+                            <span><i class="fa-solid fa-user"></i> Ev Sahibi: Robert</span>
+                        </div>
+                        <div class="prop-rating">
+                            <i class="fa-solid fa-star icon-star"></i> 4.40 <span style="font-weight:400; color:var(--text-muted);">(34 yorum)</span>
+                            <span class="min-nights-badge">🌙 Min. 1 Gece</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagination Bar -->
+            <div class="pagination-bar" id="paginationContainer">
+                <!-- JS injected pagination buttons -->
+            </div>
+        </section>
+
+        <!-- Charts Row 2: Histogram, Monthly Line Chart, Rating Bar Chart -->
+        <section class="charts-row-2">
+            <div class="chart-card-sm">
+                <h5 class="chart-sm-title">Fiyata Göre Dağılım</h5>
+                <div class="chart-sm-wrapper">
+                    <canvas id="priceHistChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card-sm">
+                <h5 class="chart-sm-title">Aylara Göre Ortalama Fiyat</h5>
+                <div class="chart-sm-wrapper">
+                    <canvas id="monthlyLineChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card-sm">
+                <h5 class="chart-sm-title">Yorum Puanı Dağılımı</h5>
+                <div class="chart-sm-wrapper">
+                    <canvas id="ratingBarChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- EXPLORE SECTION: NEW YORK BÖLGE REHBERİ (KEŞFET SEKMESİ) -->
+        <section class="explore-section" id="exploreSection" style="display: none; margin-top: 1.5rem;">
+            <div class="explore-hero-banner" style="background: linear-gradient(135deg, #fdfbf7 0%, #f5efe6 100%); border: 1px solid #e7dfd5; border-radius: 20px; padding: 2rem; color: #1e293b; margin-bottom: 2rem; position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+                <div style="position: relative; z-index: 2; max-width: 600px;">
+                    <span style="background: #e11d48; color: #ffffff; font-size: 0.75rem; font-weight: 700; padding: 4px 12px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">Özel Bölge İncelemeleri</span>
+                    <h2 style="font-size: 1.8rem; font-weight: 800; margin: 0.75rem 0 0.5rem 0; color: #0f172a;">New York Şehir Rehberi & Semt Analizleri</h2>
+                    <p style="font-size: 0.92rem; color: #475569; line-height: 1.6; margin: 0;">New York'un 5 ana bölgesinin yaşam tarzını, gecelik ortalama kiralama fiyatlarını, popüler turistik mekanlarını ve veritabanımızdaki 48.895 konaklama seçeneğini keşfedin.</p>
+                </div>
+                <div style="position: absolute; right: -20px; bottom: -30px; opacity: 0.06; font-size: 12rem; color: #475569;">
+                    <i class="fa-solid fa-city"></i>
+                </div>
+            </div>
+
+            <div class="explore-cards-grid" style="grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
+                <!-- Manhattan Card -->
+                <div class="explore-card-pro" onclick="appUI.openBoroughModal('Manhattan')">
+                    <div class="explore-card-hero">
+                        <img src="https://images.unsplash.com/photo-1534430480872-3498386e7856?auto=format&fit=crop&w=800&q=80" alt="Manhattan" />
+                        <div class="explore-card-overlay">
+                            <span class="explore-tag">Manhattan</span>
+                            <div class="explore-hero-price">Ort. <strong>$196</strong> / gece</div>
+                        </div>
+                    </div>
+                    <div class="explore-card-content">
+                        <div class="explore-card-header">
+                            <h4>Manhattan</h4>
+                            <span class="explore-sub-badge"><i class="fa-solid fa-crown"></i> Lüks & Finans</span>
+                        </div>
+                        <p class="explore-summary">Times Square, Central Park, Broadway ve New York'un simge gökdelenlerinin bulunduğu dinamik merkez.</p>
+                        <div class="explore-meta-row">
+                            <span><i class="fa-solid fa-building"></i> <strong>21.661</strong> Ev Kaydı</span>
+                            <span><i class="fa-solid fa-star icon-star"></i> <strong>4.85</strong> Müşteri Puanı</span>
+                        </div>
+                        <button class="btn-explore-action" onclick="event.stopPropagation(); appUI.openBoroughModal('Manhattan')">
+                            <span>Detaylı Bölge Rehberini Aç</span> <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Brooklyn Card -->
+                <div class="explore-card-pro" onclick="appUI.openBoroughModal('Brooklyn')">
+                    <div class="explore-card-hero">
+                        <img src="https://images.unsplash.com/photo-1543716091-a840c05249ec?auto=format&fit=crop&w=800&q=80" alt="Brooklyn" />
+                        <div class="explore-card-overlay">
+                            <span class="explore-tag bg-blue">Brooklyn</span>
+                            <div class="explore-hero-price">Ort. <strong>$124</strong> / gece</div>
+                        </div>
+                    </div>
+                    <div class="explore-card-content">
+                        <div class="explore-card-header">
+                            <h4>Brooklyn</h4>
+                            <span class="explore-sub-badge bg-blue-sub"><i class="fa-solid fa-palette"></i> Sanat & Hipster</span>
+                        </div>
+                        <p class="explore-summary">Williamsburg, DUMBO ve Brooklyn Köprüsü manzaralı tasarım kafeler ve bağımsız sanat galerileri.</p>
+                        <div class="explore-meta-row">
+                            <span><i class="fa-solid fa-building"></i> <strong>20.104</strong> Ev Kaydı</span>
+                            <span><i class="fa-solid fa-star icon-star"></i> <strong>4.80</strong> Müşteri Puanı</span>
+                        </div>
+                        <button class="btn-explore-action" onclick="event.stopPropagation(); appUI.openBoroughModal('Brooklyn')">
+                            <span>Detaylı Bölge Rehberini Aç</span> <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Queens Card -->
+                <div class="explore-card-pro" onclick="appUI.openBoroughModal('Queens')">
+                    <div class="explore-card-hero">
+                        <img src="https://images.unsplash.com/photo-1518391846015-55a9cc003b25?auto=format&fit=crop&w=800&q=80" alt="Queens" />
+                        <div class="explore-card-overlay">
+                            <span class="explore-tag bg-green">Queens</span>
+                            <div class="explore-hero-price">Ort. <strong>$99</strong> / gece</div>
+                        </div>
+                    </div>
+                    <div class="explore-card-content">
+                        <div class="explore-card-header">
+                            <h4>Queens</h4>
+                            <span class="explore-sub-badge bg-green-sub"><i class="fa-solid fa-utensils"></i> Kültür & Lezzet</span>
+                        </div>
+                        <p class="explore-summary">Astoria, LIC ve Flushing bölgelerinde dünya mutfakları, geniş parklar ve uygun fiyatlı seçenekler.</p>
+                        <div class="explore-meta-row">
+                            <span><i class="fa-solid fa-building"></i> <strong>5.666</strong> Ev Kaydı</span>
+                            <span><i class="fa-solid fa-star icon-star"></i> <strong>4.72</strong> Müşteri Puanı</span>
+                        </div>
+                        <button class="btn-explore-action" onclick="event.stopPropagation(); appUI.openBoroughModal('Queens')">
+                            <span>Detaylı Bölge Rehberini Aç</span> <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Bronx Card -->
+                <div class="explore-card-pro" onclick="appUI.openBoroughModal('Bronx')">
+                    <div class="explore-card-hero">
+                        <img src="https://images.unsplash.com/photo-1572953109213-3be62398eb95?auto=format&fit=crop&w=800&q=80" alt="Bronx" />
+                        <div class="explore-card-overlay">
+                            <span class="explore-tag bg-yellow">Bronx</span>
+                            <div class="explore-hero-price">Ort. <strong>$87</strong> / gece</div>
+                        </div>
+                    </div>
+                    <div class="explore-card-content">
+                        <div class="explore-card-header">
+                            <h4>Bronx</h4>
+                            <span class="explore-sub-badge bg-yellow-sub"><i class="fa-solid fa-baseball-bat-ball"></i> Tarih & Doğa</span>
+                        </div>
+                        <p class="explore-summary">Yankee Stadyumu, Botanik Bahçeleri ve Hip-Hop kültürünün doğduğu zengin tarihi mekanlar.</p>
+                        <div class="explore-meta-row">
+                            <span><i class="fa-solid fa-building"></i> <strong>1.091</strong> Ev Kaydı</span>
+                            <span><i class="fa-solid fa-star icon-star"></i> <strong>4.65</strong> Müşteri Puanı</span>
+                        </div>
+                        <button class="btn-explore-action" onclick="event.stopPropagation(); appUI.openBoroughModal('Bronx')">
+                            <span>Detaylı Bölge Rehberini Aç</span> <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- EXPLORE BOROUGH DETAIL PAGE (TAM EKRAN BEYAZ BÖLGE REHBER SAYFASI) -->
+        <section class="explore-detail-view" id="exploreDetailView" style="display: none; background: #ffffff; border-radius: 20px; padding: 2rem; box-shadow: 0 4px 24px rgba(0,0,0,0.06); border: 1px solid var(--border-color); margin-top: 1.5rem;">
+            <!-- Back Header Navigation Bar -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+                <button type="button" class="btn-outline-dark" onclick="appUI.closeBoroughModal()" style="padding: 0.5rem 1.25rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; border-radius: 10px;">
+                    <i class="fa-solid fa-arrow-left"></i> <span>Tüm Bölgelere Dön</span>
+                </button>
+                <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">
+                    <span style="color: var(--accent-red);"><i class="fa-solid fa-compass"></i> Keşfet</span> / <span id="bModalBadge">Bölge Rehberi</span>
+                </div>
+            </div>
+
+            <!-- Hero Banner Image -->
+            <div class="modal-header-hero" style="position: relative; height: 280px; width: 100%; border-radius: 16px; overflow: hidden; margin-bottom: 1.75rem;">
+                <img id="bModalImg" src="" alt="Bölge Fotoğrafı" style="width: 100%; height: 100%; object-fit: cover;" />
+                <div style="position: absolute; top:0; left:0; right:0; bottom:0; background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(15,23,42,0.85) 100%);"></div>
+                <div style="position: absolute; bottom: 1.75rem; left: 1.75rem; right: 1.75rem; color: #fff;">
+                    <span class="modal-img-badge-pro" style="background: var(--accent-red); color: #fff; font-size: 0.75rem; font-weight: 700; padding: 4px 14px; border-radius: 20px; display: inline-block; margin-bottom: 0.5rem;">NYC Bölge Rehberi</span>
+                    <h2 id="bModalTitle" style="font-size: 2.2rem; font-weight: 800; margin: 0; color: #ffffff; text-shadow: 0 2px 6px rgba(0,0,0,0.4);">Manhattan Bölge Rehberi</h2>
+                    <p class="modal-subtitle" id="bModalSubtitle" style="font-size: 1rem; line-height: 1.5; color: #cbd5e1; margin: 0.35rem 0 0 0;">New York'un simgesel gökdelenleri, lüks restoranları ve 24 saat yaşayan kültürü.</p>
+                </div>
+            </div>
+
+            <div class="modal-body-content" style="padding: 0;">
+                <!-- 4'lü KPI Kart Düzeni -->
+                <div class="borough-kpi-row" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; margin-bottom: 2rem;">
+                    <div class="b-kpi-card" style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.2rem; text-align: center;">
+                        <div style="font-size: 1.4rem; color: var(--accent-red); margin-bottom: 0.3rem;"><i class="fa-solid fa-tag"></i></div>
+                        <span style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Ort. Gece Fiyatı</span>
+                        <strong id="bModalAvgPrice" style="font-size: 1.3rem; color: var(--text-color); font-weight: 800;">$196</strong>
+                    </div>
+                    <div class="b-kpi-card" style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.2rem; text-align: center;">
+                        <div style="font-size: 1.4rem; color: #3b82f6; margin-bottom: 0.3rem;"><i class="fa-solid fa-house"></i></div>
+                        <span style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Toplam Ev Sayısı</span>
+                        <strong id="bModalTotalListings" style="font-size: 1.3rem; color: var(--text-color); font-weight: 800;">21.661</strong>
+                    </div>
+                    <div class="b-kpi-card" style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.2rem; text-align: center;">
+                        <div style="font-size: 1.4rem; color: #eab308; margin-bottom: 0.3rem;"><i class="fa-solid fa-star"></i></div>
+                        <span style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Müşteri Puanı</span>
+                        <strong id="bModalAvgRating" style="font-size: 1.3rem; color: var(--text-color); font-weight: 800;">4.85 / 5</strong>
+                    </div>
+                    <div class="b-kpi-card" style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.2rem; text-align: center;">
+                        <div style="font-size: 1.4rem; color: #10b981; margin-bottom: 0.3rem;"><i class="fa-solid fa-train"></i></div>
+                        <span style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Metro Erişimi</span>
+                        <strong style="font-size: 1.3rem; color: #10b981; font-weight: 800;">%98 Yüksek</strong>
+                    </div>
+                </div>
+
+                <!-- Gezilecek Yerler Galerisi -->
+                <div style="margin-bottom: 2rem;">
+                    <h4 style="font-size: 1.15rem; font-weight: 800; margin-bottom: 1rem; display:flex; align-items:center; gap:0.5rem;">
+                        <i class="fa-solid fa-camera" style="color: var(--accent-red);"></i> <span>İkonik Gezi Noktaları & Şehir Mimarisi</span>
+                    </h4>
+                    <div class="borough-gallery-grid" id="bModalGallery" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+                        <!-- Injected via JS -->
+                    </div>
+                </div>
+
+                <!-- Ulaşım ve Yaşam İpuçları Panel -->
+                <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.5rem; margin-bottom: 2rem;">
+                    <h4 style="font-size: 1.05rem; font-weight: 800; margin-bottom: 0.65rem; display:flex; align-items:center; gap:0.5rem;">
+                        <i class="fa-solid fa-map-location-dot" style="color: var(--accent-red);"></i> <span>Öne Çıkan Semtler & Turistik Noktalar</span>
+                    </h4>
+                    <p id="bModalAttractions" style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 1.15rem;">Times Square, Central Park, Greenwich Village, Upper East Side, Soho.</p>
+                    
+                    <div style="border-top: 1px dashed var(--border-color); padding-top: 1.15rem; font-size: 0.88rem; color: var(--text-muted); display: flex; gap: 2rem; flex-wrap: wrap;">
+                        <span style="display:flex; align-items:center; gap:0.5rem;"><i class="fa-solid fa-subway" style="color:#3b82f6; font-size:1.1rem;"></i> <span><strong>Ulaşım:</strong> 24 Saat Metro Hatları (A, C, E, 1, 2, 3)</span></span>
+                        <span style="display:flex; align-items:center; gap:0.5rem;"><i class="fa-solid fa-utensils" style="color:#10b981; font-size:1.1rem;"></i> <span><strong>Yeme-İçme:</strong> Gurme Restoranlar & Gece Klüpleri</span></span>
+                    </div>
+                </div>
+
+                <!-- Bölgenin Öne Çıkan Evleri -->
+                <div style="margin-bottom: 2rem;">
+                    <h4 style="font-size: 1.15rem; font-weight: 800; margin-bottom: 1rem; display:flex; align-items:center; gap:0.5rem;">
+                        <i class="fa-solid fa-fire" style="color: var(--accent-red);"></i> <span>Bu Bölgede En Çok Tercih Edilen Öne Çıkan Evler</span>
+                    </h4>
+                    <div class="listings-grid" id="bModalFeaturedHomes" style="grid-template-columns: repeat(2, 1fr); gap: 1.25rem;">
+                        <!-- Injected via JS -->
+                    </div>
+                </div>
+
+                <!-- Bottom Action Buttons -->
+                <div style="display: flex; gap: 1rem; margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+                    <button type="button" class="btn-primary-coral flex-1" id="btnFilterThisBorough" onclick="appUI.applyBoroughFilterFromModal()" style="padding: 0.95rem; font-size: 1rem; font-weight:700;"><i class="fa-solid fa-building"></i> Tüm <span id="bModalBtnName">Manhattan</span> Evlerini Ana Ekranda Filtrele</button>
+                    <button type="button" class="btn-outline-dark" onclick="appUI.closeBoroughModal()" style="padding: 0.95rem 2rem; font-weight:700;">Keşfet'e Dön</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- STATISTICS SECTION: TAM EKRAN İNTERAKTİF ANALİZ & GRAFİK RAPOR PANELERİ -->
+        <section class="statistics-section" id="statisticsSection" style="display: none; background: #ffffff; border-radius: 20px; padding: 2rem; box-shadow: 0 4px 24px rgba(0,0,0,0.06); border: 1px solid var(--border-color); margin-top: 1.5rem;">
+            <!-- Header Banner -->
+            <div style="background: linear-gradient(135deg, #fdfbf7 0%, #f5efe6 100%); border: 1px solid #e7dfd5; border-radius: 16px; padding: 2rem; color: #1e293b; margin-bottom: 2rem; position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+                <div style="position: relative; z-index: 2;">
+                    <span style="background: #e11d48; color: #ffffff; font-size: 0.75rem; font-weight: 700; padding: 4px 12px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">Şehir Veri İncelemesi</span>
+                    <h2 style="font-size: 1.8rem; font-weight: 800; margin: 0.75rem 0 0.5rem 0; color: #0f172a;">New York Kiralama Piyasası & Analiz Raporu</h2>
+                    <p style="font-size: 0.92rem; color: #475569; line-height: 1.6; margin: 0;">Veritabanındaki 48.895 konaklama seçeneğinin fiyat dağılımlarını, bölge ortalamalarını, oda tipi oranlarını ve en çok tercih edilen popüler semtleri grafiklerle inceleyin.</p>
+                </div>
+                <div style="position: absolute; right: -20px; bottom: -30px; opacity: 0.06; font-size: 11rem; color: #475569;">
+                    <i class="fa-solid fa-chart-line"></i>
+                </div>
+            </div>
+
+            <!-- Top 4 Analytics Summary Cards -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; margin-bottom: 2rem;">
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 1.25rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                        <span style="font-size:0.8rem; color:#64748b; font-weight:600;">En Yüksek Fiyatlı Bölge</span>
+                        <div style="color:#f43f5e; font-size:1.2rem;"><i class="fa-solid fa-crown"></i></div>
+                    </div>
+                    <h3 style="font-size:1.4rem; font-weight:800; margin:0; color:#1e293b;">Manhattan</h3>
+                    <small style="color:#64748b; font-size:0.78rem;">Gecelik Ort. <strong>$196</strong></small>
+                </div>
+
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 1.25rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                        <span style="font-size:0.8rem; color:#64748b; font-weight:600;">En Popüler Konaklama</span>
+                        <div style="color:#6366f1; font-size:1.2rem;"><i class="fa-solid fa-house"></i></div>
+                    </div>
+                    <h3 style="font-size:1.4rem; font-weight:800; margin:0; color:#1e293b;">Entire Home</h3>
+                    <small style="color:#64748b; font-size:0.78rem;">Piyasa Payı <strong>%52</strong> (25.604 Ev)</small>
+                </div>
+
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 1.25rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                        <span style="font-size:0.8rem; color:#64748b; font-weight:600;">En Uygun Bütçeli Bölge</span>
+                        <div style="color:#10b981; font-size:1.2rem;"><i class="fa-solid fa-piggy-bank"></i></div>
+                    </div>
+                    <h3 style="font-size:1.4rem; font-weight:800; margin:0; color:#1e293b;">Staten Island</h3>
+                    <small style="color:#64748b; font-size:0.78rem;">Gecelik Ort. <strong>$73</strong></small>
+                </div>
+
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 1.25rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                        <span style="font-size:0.8rem; color:#64748b; font-weight:600;">Genel Müşteri Puanı</span>
+                        <div style="color:#f59e0b; font-size:1.2rem;"><i class="fa-solid fa-star"></i></div>
+                    </div>
+                    <h3 style="font-size:1.4rem; font-weight:800; margin:0; color:#1e293b;">4.65 / 5</h3>
+                    <small style="color:#64748b; font-size:0.78rem;">1.52 Milyon Değerlendirme</small>
+                </div>
+            </div>
+
+            <!-- Charts Section 1: Detailed Borough Price Comparison & Room Type Breakdown -->
+            <div style="display: grid; grid-template-columns: 1.6fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 18px; padding: 1.5rem;">
+                    <h4 style="font-size: 1.05rem; font-weight: 800; margin-bottom: 1rem; color:#334155; display:flex; align-items:center; gap:0.5rem;">
+                        <i class="fa-solid fa-chart-simple" style="color: #6366f1;"></i> <span>Bölgelere Göre Gecelik Ortalama Fiyat Karşılaştırması ($)</span>
+                    </h4>
+                    <div style="height: 280px; position: relative;">
+                        <canvas id="statBoroughChart"></canvas>
+                    </div>
+                </div>
+
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 18px; padding: 1.5rem;">
+                    <h4 style="font-size: 1.05rem; font-weight: 800; margin-bottom: 1rem; color:#334155; display:flex; align-items:center; gap:0.5rem;">
+                        <i class="fa-solid fa-chart-pie" style="color: #38bdf8;"></i> <span>Oda Tipi Dağılım Oranları</span>
+                    </h4>
+                    <div style="height: 280px; position: relative;">
+                        <canvas id="statRoomTypeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Neighborhoods Leaderboard Table -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 18px; padding: 1.5rem;">
+                <h4 style="font-size: 1.05rem; font-weight: 800; margin-bottom: 1rem; color:#334155; display:flex; align-items:center; gap:0.5rem;">
+                    <i class="fa-solid fa-trophy" style="color: #f59e0b;"></i> <span>New York'un En Çok İlan Barındıran Top 5 Semti</span>
+                </h4>
+                
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #cbd5e1; color: #64748b; font-size: 0.78rem; text-transform: uppercase;">
+                            <th style="padding: 10px 12px;">Sıra</th>
+                            <th style="padding: 10px 12px;">Semt (Neighbourhood)</th>
+                            <th style="padding: 10px 12px;">Ana Bölge</th>
+                            <th style="padding: 10px 12px;">İlan Sayısı</th>
+                            <th style="padding: 10px 12px;">Ort. Gece Fiyatı</th>
+                            <th style="padding: 10px 12px;">Doluluk Oranı</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 12px;"><span style="background:#fbbf24; color:#fff; font-size:0.75rem; font-weight:800; padding:3px 9px; border-radius:50%;">1</span></td>
+                            <td style="padding: 12px; font-weight:700; color:#1e293b;">Williamsburg</td>
+                            <td style="padding: 12px; color:#64748b;">Brooklyn</td>
+                            <td style="padding: 12px; font-weight:700; color:#334155;">3.920 İlan</td>
+                            <td style="padding: 12px; color:#f43f5e; font-weight:800;">$143</td>
+                            <td style="padding: 12px; color:#10b981; font-weight:700;">%88 Yüksek</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 12px;"><span style="background:#94a3b8; color:#fff; font-size:0.75rem; font-weight:800; padding:3px 9px; border-radius:50%;">2</span></td>
+                            <td style="padding: 12px; font-weight:700; color:#1e293b;">Bedford-Stuyvesant</td>
+                            <td style="padding: 12px; color:#64748b;">Brooklyn</td>
+                            <td style="padding: 12px; font-weight:700; color:#334155;">3.714 İlan</td>
+                            <td style="padding: 12px; color:#f43f5e; font-weight:800;">$107</td>
+                            <td style="padding: 12px; color:#10b981; font-weight:700;">%85 Yüksek</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 12px;"><span style="background:#d97706; color:#fff; font-size:0.75rem; font-weight:800; padding:3px 9px; border-radius:50%;">3</span></td>
+                            <td style="padding: 12px; font-weight:700; color:#1e293b;">Harlem</td>
+                            <td style="padding: 12px; color:#64748b;">Manhattan</td>
+                            <td style="padding: 12px; font-weight:700; color:#334155;">2.658 İlan</td>
+                            <td style="padding: 12px; color:#f43f5e; font-weight:800;">$118</td>
+                            <td style="padding: 12px; color:#10b981; font-weight:700;">%82 Yüksek</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 12px;"><span style="background:#cbd5e1; color:#475569; font-size:0.75rem; font-weight:800; padding:3px 9px; border-radius:50%;">4</span></td>
+                            <td style="padding: 12px; font-weight:700; color:#1e293b;">Bushwick</td>
+                            <td style="padding: 12px; color:#64748b;">Brooklyn</td>
+                            <td style="padding: 12px; font-weight:700; color:#334155;">2.465 İlan</td>
+                            <td style="padding: 12px; color:#f43f5e; font-weight:800;">$84</td>
+                            <td style="padding: 12px; color:#6366f1; font-weight:700;">%79 Orta</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px;"><span style="background:#cbd5e1; color:#475569; font-size:0.75rem; font-weight:800; padding:3px 9px; border-radius:50%;">5</span></td>
+                            <td style="padding: 12px; font-weight:700; color:#1e293b;">Upper West Side</td>
+                            <td style="padding: 12px; color:#64748b;">Manhattan</td>
+                            <td style="padding: 12px; font-weight:700; color:#334155;">1.971 İlan</td>
+                            <td style="padding: 12px; color:#f43f5e; font-weight:800;">$210</td>
+                            <td style="padding: 12px; color:#10b981; font-weight:700;">%91 Çok Yüksek</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- FAVORITES SECTION: TAM SAYFA FAVORİLERİM YÖNETİM PANELİ -->
+        <section class="favorites-section" id="favoritesSection" style="display: none; background: #ffffff; border-radius: 20px; padding: 2rem; box-shadow: 0 4px 24px rgba(0,0,0,0.06); border: 1px solid var(--border-color); margin-top: 1.5rem;">
+            <!-- Header Banner -->
+            <div style="background: linear-gradient(135deg, #fdfbf7 0%, #f5efe6 100%); border: 1px solid #e7dfd5; border-radius: 16px; padding: 2rem; color: #1e293b; margin-bottom: 2rem; position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+                <div style="position: relative; z-index: 2;">
+                    <span style="background: #e11d48; color: #ffffff; font-size: 0.75rem; font-weight: 700; padding: 4px 12px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">Kişisel Koleksiyonum</span>
+                    <h2 style="font-size: 1.8rem; font-weight: 800; margin: 0.75rem 0 0.5rem 0; color: #0f172a;">Beğendiğim Evler & Tatil Planım</h2>
+                    <p style="font-size: 0.92rem; color: #475569; line-height: 1.6; margin: 0;">Kaydettiğiniz favori konaklama seçeneklerini yönetin, bütçenizi hesaplayın ve tek tıkla rezervasyon işlemlerinizi başlatın.</p>
+                </div>
+                <div style="position: absolute; right: -20px; bottom: -30px; opacity: 0.06; font-size: 11rem; color: #475569;">
+                    <i class="fa-solid fa-heart"></i>
+                </div>
+            </div>
+
+            <!-- Top Summary & Control Bar -->
+            <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 1.25rem 1.75rem; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+                <div style="display: flex; gap: 2rem; align-items: center;">
+                    <div>
+                        <span style="font-size: 0.8rem; color: #64748b; font-weight: 600; display: block;">Toplam Favori Ev</span>
+                        <strong style="font-size: 1.4rem; font-weight: 800; color: #0f172a;" id="favPageTotalCount">0 Ev</strong>
+                    </div>
+                    <div style="border-left: 1px solid #cbd5e1; padding-left: 2rem;">
+                        <span style="font-size: 0.8rem; color: #64748b; font-weight: 600; display: block;">Tahmini Ort. Gece Fiyatı</span>
+                        <strong style="font-size: 1.4rem; font-weight: 800; color: #e11d48;" id="favPageAvgPrice">$0</strong>
+                    </div>
+                    <div style="border-left: 1px solid #cbd5e1; padding-left: 2rem;">
+                        <span style="font-size: 0.8rem; color: #64748b; font-weight: 600; display: block;">3 Gece Toplam Konaklama</span>
+                        <strong style="font-size: 1.4rem; font-weight: 800; color: #10b981;" id="favPageTotalPrice">$0</strong>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 1rem;">
+                    <button type="button" class="btn-outline-dark" onclick="appUI.switchTab('map')" style="padding: 0.75rem 1.25rem; font-weight: 700; border-radius: 12px; font-size: 0.88rem;">
+                        <i class="fa-solid fa-map-location-dot" style="color: #6366f1;"></i> Favorileri Haritada Gör
+                    </button>
+                    <button type="button" class="btn-primary-coral" onclick="appUI.clearAllFavorites()" style="padding: 0.75rem 1.25rem; font-weight: 700; border-radius: 12px; font-size: 0.88rem; background: #ef4444; border: none;">
+                        <i class="fa-solid fa-trash-can"></i> Listeyi Temizle
+                    </button>
+                </div>
+            </div>
+
+            <!-- Favorites Grid Container -->
+            <div class="listings-grid" id="favoritesPageGrid" style="grid-template-columns: repeat(3, 1fr); gap: 1.5rem;">
+                <!-- Injected via JS -->
+            </div>
+
+            <!-- Empty State Display -->
+            <div id="favEmptyState" style="display: none; text-align: center; padding: 4rem 2rem; background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 20px; margin-top: 1rem;">
+                <div style="font-size: 3.5rem; color: #94a3b8; margin-bottom: 1rem;"><i class="fa-regular fa-heart"></i></div>
+                <h3 style="font-size: 1.3rem; font-weight: 800; color: #1e293b; margin-bottom: 0.5rem;">Henüz Favori Ev Eklemediniz</h3>
+                <p style="font-size: 0.92rem; color: #64748b; max-width: 480px; margin: 0 auto 1.5rem auto;">Ana sayfadaki veya haritadaki ev kartlarında bulunan kalp simgelerine tıklayarak beğendiğiniz evleri buraya kaydedebilirsiniz.</p>
+            </div>
+        </section>
+
+        <!-- COMPARE SECTION: TAM SAYFA EV KARŞILAŞTIRMA PANELİ -->
+        <section class="compare-section" id="compareSection" style="display: none; background: #ffffff; border-radius: 20px; padding: 2rem; box-shadow: 0 4px 24px rgba(0,0,0,0.06); border: 1px solid var(--border-color); margin-top: 1.5rem;">
+            <!-- Header Banner -->
+            <div style="background: linear-gradient(135deg, #fdfbf7 0%, #f5efe6 100%); border: 1px solid #e7dfd5; border-radius: 16px; padding: 2rem; color: #1e293b; margin-bottom: 2rem; position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+                <div style="position: relative; z-index: 2;">
+                    <span style="background: #e11d48; color: #ffffff; font-size: 0.75rem; font-weight: 700; padding: 4px 12px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">Karşılaştırma Aracı</span>
+                    <h2 style="font-size: 1.8rem; font-weight: 800; margin: 0.75rem 0 0.5rem 0; color: #0f172a;">Seçilen Evlerin Detaylı Karşılaştırması</h2>
+                    <p style="font-size: 0.92rem; color: #475569; line-height: 1.6; margin: 0;">Favorilerinizdeki veya seçtiğiniz konaklama seçeneklerini yan yana koyarak fiyat, oda tipi, müşteri puanı ve konum avantajlarını kıyaslayın.</p>
+                </div>
+                <div style="position: absolute; right: -20px; bottom: -30px; opacity: 0.06; font-size: 11rem; color: #475569;">
+                    <i class="fa-solid fa-code-compare"></i>
+                </div>
+            </div>
+
+            <!-- Property Selection Selector Bar -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 1.25rem; margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <i class="fa-solid fa-sliders" style="color: #6366f1; font-size: 1.2rem;"></i>
+                    <span style="font-weight: 700; color: #1e293b; font-size: 0.95rem;">Hızlı Karşılaştırma Modu:</span>
+                    <span style="color: #64748b; font-size: 0.85rem;" id="compareSelectionNotice">Listenizdeki evler otomatik kıyaslanıyor.</span>
+                </div>
+                <div>
+                    <button type="button" class="btn-outline-dark" onclick="appUI.switchTab('home')" style="padding: 0.6rem 1.2rem; font-weight: 700; font-size: 0.85rem; border-radius: 10px;">
+                        <i class="fa-solid fa-plus"></i> Daha Fazla Ev Ekle
+                    </button>
+                </div>
+            </div>
+
+            <!-- Comparison Table Container -->
+            <div style="overflow-x: auto;" id="compareTableWrapper">
+                <!-- Injected via JS -->
+            </div>
+        </section>
+
+    </div>
+
+    <!-- 3. RIGHT PANEL: MAP & FAVORITES OVERLAY -->
+    <section class="map-section-container" id="mapSectionContainer">
+
+        <!-- Interactive Map -->
+        <div id="map" class="map-view"></div>
+
+        <!-- Floating Map Buttons: Expand & Layer Switcher -->
+        <div class="map-floating-tools">
+            <button class="map-tool-btn expand-btn" title="Haritayı Büyüt / Tam Ekran" onclick="appUI.toggleMapExpand()">
+                <i class="fa-solid fa-expand" id="mapExpandIcon"></i>
+            </button>
+            <button class="map-tool-btn layer-btn" title="Katman Değiştir" onclick="appUI.toggleMapTileLayer()">
+                <i class="fa-solid fa-layer-group"></i>
+            </button>
+        </div>
+
+        <!-- Map Property Popup Preview Overlay -->
+        <div class="map-popup-card" id="mapPopupCard">
+            <button class="close-popup-btn" onclick="appUI.closeMapPopup()"><i class="fa-solid fa-xmark"></i></button>
+            <div class="popup-img-wrap">
+                <img id="popImg" src="" alt="Property" />
+            </div>
+            <div class="popup-body">
+                <h4 id="popTitle">Harika konumda daire</h4>
+                <p class="pop-location" id="popLoc">📍 Manhattan, New York</p>
+                <div class="pop-specs">
+                    <span id="popBeds"><i class="fa-solid fa-bed"></i> 2 yatak</span>
+                    <span id="popGuests"><i class="fa-solid fa-user-group"></i> 4 misafir</span>
+                    <span id="popRoomType"><i class="fa-solid fa-house-chimney"></i> Tüm Ev / Daire</span>
+                </div>
+                <div class="pop-footer">
+                    <div class="pop-rating"><i class="fa-solid fa-star icon-star"></i> <strong id="popRating">4.89</strong> <span id="popReviews">(120 yorum)</span></div>
+                    <div class="pop-price-box"><strong id="popPrice">$120</strong> <small>/ gece</small></div>
+                </div>
+                <button type="button" class="btn-primary-coral w-100 mt-2" onclick="appUI.openDetailModal()">Detayları Gör</button>
+            </div>
+        </div>
+
+    </section>
+
+</div>

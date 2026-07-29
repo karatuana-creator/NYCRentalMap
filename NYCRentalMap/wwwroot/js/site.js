@@ -1,0 +1,1767 @@
+/* ==========================================================================
+   NYC RENTAL MAP — MAIN DASHBOARD APPLICATION SCRIPT
+   Full Interactive Features: Filter, Charts, Leaflet Map, Favorites, Modals
+   ========================================================================== */
+
+const appUI = (function () {
+    'use strict';
+
+    // ── Application State ──
+    let map = null;
+    let markersGroup = null;
+    let currentTileIndex = 0;
+    
+    // Available Map Tile Layers
+    const mapTiles = [
+        { url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', attribution: '&copy; OpenStreetMap' },
+        { url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', attribution: '&copy; CARTO Voyager' },
+        { url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', attribution: '&copy; CARTO Dark' }
+    ];
+
+    // Favorites Array
+    let favoriteIds = new Set(); // Stores user favourited property IDs
+    let currentListingsData = [];
+    let activeProperty = null;
+
+    function toggleFavorite(id, btnElement) {
+        const numId = Number(id);
+        if (favoriteIds.has(numId)) {
+            favoriteIds.delete(numId);
+            if (btnElement) {
+                btnElement.classList.remove('active');
+                const icon = btnElement.querySelector('i');
+                if (icon) icon.className = 'fa-regular fa-heart';
+            }
+        } else {
+            favoriteIds.add(numId);
+            if (btnElement) {
+                btnElement.classList.add('active');
+                const icon = btnElement.querySelector('i');
+                if (icon) icon.className = 'fa-solid fa-heart';
+            }
+        }
+        renderFavoritesDrawer();
+    }
+
+    function renderFavoritesPage() {
+        const grid = document.getElementById('favoritesPageGrid');
+        const emptyState = document.getElementById('favEmptyState');
+        const totalCountEl = document.getElementById('favPageTotalCount');
+        const avgPriceEl = document.getElementById('favPageAvgPrice');
+        const totalPriceEl = document.getElementById('favPageTotalPrice');
+
+        if (!grid) return;
+
+        if (favoriteIds.size === 0) {
+            grid.style.display = 'none';
+            if (emptyState) emptyState.style.display = 'block';
+            if (totalCountEl) totalCountEl.textContent = '0 Ev';
+            if (avgPriceEl) avgPriceEl.textContent = '$0';
+            if (totalPriceEl) totalPriceEl.textContent = '$0';
+            return;
+        }
+
+        grid.style.display = 'grid';
+        if (emptyState) emptyState.style.display = 'none';
+
+        let totalPriceSum = 0;
+        let html = '';
+
+        favoriteIds.forEach(id => {
+            const p = currentListingsData.find(x => Number(x.id) === Number(id)) || {
+                id: id,
+                name: 'Harika Konumda Ev #' + id,
+                price: 120,
+                borough: 'Manhattan',
+                neighbourhood: 'New York',
+                rating: 4.85,
+                reviews: 45,
+                beds: 2,
+                guests: 4,
+                imageUrl: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=600&q=80'
+            };
+
+            const price = p.price || 120;
+            totalPriceSum += price;
+
+            html += `
+                <div class="property-card" onclick="appUI.selectPropertyById(${p.id})">
+                    <div class="card-img-wrapper">
+                        <img src="${p.imageUrl}" alt="${escapeHtml(p.name)}" class="card-img" />
+                        <span class="badge-room-type">${escapeHtml(p.roomType || 'Tüm Ev')}</span>
+                        <button type="button" class="btn-fav active" onclick="event.stopPropagation(); appUI.toggleFavorite(${p.id}, this)">
+                            <i class="fa-solid fa-heart"></i>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="card-location">📍 ${escapeHtml(p.neighbourhood || 'New York')}, ${escapeHtml(p.borough || 'Manhattan')}</div>
+                        <h4 class="card-title">${escapeHtml(p.name)}</h4>
+                        <div class="card-specs">
+                            <span><i class="fa-solid fa-bed"></i> ${p.beds || 2} yatak</span>
+                            <span><i class="fa-solid fa-user-group"></i> ${p.guests || 4} misafir</span>
+                        </div>
+                        <div class="card-footer">
+                            <div class="card-rating">
+                                <i class="fa-solid fa-star icon-star"></i>
+                                <strong>${p.rating || 4.8}</strong>
+                                <span class="reviews-count">(${p.reviews || 25})</span>
+                            </div>
+                            <div class="card-price-box">
+                                <strong class="price-val">$${price}</strong>
+                                <small class="price-unit">/ gece</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        grid.innerHTML = html;
+
+        const count = favoriteIds.size;
+        const avgPrice = Math.round(totalPriceSum / count);
+        const total3Nights = totalPriceSum * 3;
+
+        if (totalCountEl) totalCountEl.textContent = count + ' Ev';
+        if (avgPriceEl) avgPriceEl.textContent = '$' + avgPrice;
+        if (totalPriceEl) totalPriceEl.textContent = '$' + total3Nights.toLocaleString('tr-TR');
+    }
+
+    function renderComparePage() {
+        const wrapper = document.getElementById('compareTableWrapper');
+        if (!wrapper) return;
+
+        let compareProps = [];
+        if (favoriteIds.size > 0) {
+            favoriteIds.forEach(id => {
+                const item = currentListingsData.find(x => Number(x.id) === Number(id));
+                if (item) compareProps.push(item);
+            });
+        }
+
+        // If user has no favorites yet, pick top 3 listings to present a rich comparison table
+        if (compareProps.length < 2 && currentListingsData.length >= 2) {
+            compareProps = currentListingsData.slice(0, 3);
+        }
+
+        if (compareProps.length === 0) {
+            wrapper.innerHTML = `
+                <div style="text-align:center; padding:3rem; background:#f8fafc; border-radius:16px;">
+                    <i class="fa-solid fa-code-compare" style="font-size:3rem; color:#94a3b8; margin-bottom:1rem;"></i>
+                    <h4 style="font-size:1.1rem; font-weight:700; color:#1e293b;">Karşılaştırılacak Ev Bulunamadı</h4>
+                    <p style="color:#64748b; font-size:0.88rem;">Lütfen ana sayfadan ev seçin veya favorilerinize ekleyin.</p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = `
+            <table style="width:100%; border-collapse:separate; border-spacing:1rem 0; min-width:750px;">
+                <thead>
+                    <tr>
+                        <th style="width:180px; padding:1rem; text-align:left; background:#f8fafc; border-radius:12px; font-size:0.9rem; color:#64748b;">Özellikler</th>
+        `;
+
+        compareProps.forEach(p => {
+            html += `
+                <th style="padding:1rem; background:#f8fafc; border-radius:16px 16px 0 0; text-align:center; vertical-align:top; width:260px;">
+                    <img src="${p.imageUrl || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=400&q=80'}" style="width:100%; height:130px; object-fit:cover; border-radius:12px; margin-bottom:0.75rem;" />
+                    <h4 style="font-size:0.95rem; font-weight:800; color:#0f172a; margin:0 0 0.25rem 0; line-height:1.3; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">${escapeHtml(p.name)}</h4>
+                    <span style="font-size:0.75rem; color:#64748b;">📍 ${escapeHtml(p.neighbourhood || 'New York')}, ${escapeHtml(p.borough || 'Manhattan')}</span>
+                </th>
+            `;
+        });
+
+        html += `
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Row 1: Price -->
+                    <tr>
+                        <td style="padding:1rem; font-weight:700; color:#334155; border-bottom:1px solid #e2e8f0;"><i class="fa-solid fa-tag" style="color:#e11d48; margin-right:6px;"></i> Gecelik Fiyat</td>
+        `;
+        compareProps.forEach(p => {
+            html += `<td style="padding:1rem; text-align:center; font-weight:800; font-size:1.1rem; color:#e11d48; border-bottom:1px solid #e2e8f0; background:#fff;">$${p.price || 120} <small style="font-weight:400; color:#64748b; font-size:0.75rem;">/gece</small></td>`;
+        });
+
+        html += `
+                    </tr>
+                    <!-- Row 2: Room Type -->
+                    <tr>
+                        <td style="padding:1rem; font-weight:700; color:#334155; border-bottom:1px solid #e2e8f0;"><i class="fa-solid fa-house" style="color:#6366f1; margin-right:6px;"></i> Oda Tipi</td>
+        `;
+        compareProps.forEach(p => {
+            html += `<td style="padding:1rem; text-align:center; font-weight:700; font-size:0.88rem; color:#1e293b; border-bottom:1px solid #e2e8f0; background:#fff;">${escapeHtml(p.roomType || 'Tüm Ev')}</td>`;
+        });
+
+        html += `
+                    </tr>
+                    <!-- Row 3: Rating -->
+                    <tr>
+                        <td style="padding:1rem; font-weight:700; color:#334155; border-bottom:1px solid #e2e8f0;"><i class="fa-solid fa-star" style="color:#f59e0b; margin-right:6px;"></i> Müşteri Puanı</td>
+        `;
+        compareProps.forEach(p => {
+            html += `<td style="padding:1rem; text-align:center; font-weight:700; font-size:0.88rem; color:#1e293b; border-bottom:1px solid #e2e8f0; background:#fff;"><i class="fa-solid fa-star" style="color:#f59e0b;"></i> ${p.rating || 4.85} <small style="color:#64748b;">(${p.reviews || 45} yorum)</small></td>`;
+        });
+
+        html += `
+                    </tr>
+                    <!-- Row 4: Minimum Nights -->
+                    <tr>
+                        <td style="padding:1rem; font-weight:700; color:#334155; border-bottom:1px solid #e2e8f0;"><i class="fa-solid fa-moon" style="color:#38bdf8; margin-right:6px;"></i> Min. Konaklama</td>
+        `;
+        compareProps.forEach(p => {
+            html += `<td style="padding:1rem; text-align:center; font-weight:700; font-size:0.88rem; color:#1e293b; border-bottom:1px solid #e2e8f0; background:#fff;">${p.minNights || 1} Gece</td>`;
+        });
+
+        html += `
+                    </tr>
+                    <!-- Row 5: Action Button -->
+                    <tr>
+                        <td style="padding:1rem;"></td>
+        `;
+        compareProps.forEach(p => {
+            html += `
+                <td style="padding:1.25rem 1rem; text-align:center; background:#f8fafc; border-radius:0 0 16px 16px;">
+                    <button type="button" class="btn-primary-coral" onclick="appUI.selectPropertyById(${p.id})" style="width:100%; padding:0.65rem; font-weight:700; border-radius:10px; font-size:0.85rem;">
+                        İncele & Rezerve Et
+                    </button>
+                </td>
+            `;
+        });
+
+        html += `
+                    </tr>
+                </tbody>
+            </table>
+        `;
+
+        wrapper.innerHTML = html;
+    }
+
+    function clearAllFavorites() {
+        favoriteIds.clear();
+        renderFavoritesDrawer();
+        renderFavoritesPage();
+    }
+
+    function renderFavoritesDrawer() {
+        const countBadgeNav = document.getElementById('navFavBadge');
+        const countTxtDrawer = document.getElementById('favCountTxt');
+        const favContainer = document.getElementById('favCardsContainer');
+
+        if (countBadgeNav) countBadgeNav.textContent = favoriteIds.size;
+        if (countTxtDrawer) countTxtDrawer.textContent = favoriteIds.size;
+
+        if (!favContainer) return;
+
+        if (favoriteIds.size === 0) {
+            favContainer.innerHTML = '<span style="font-size:0.8rem; color:#9ca3af; padding: 0.5rem 0;">Henüz favorilere ev eklemediniz. Ev kartlarındaki kalbe basarak ekleyebilirsiniz.</span>';
+            return;
+        }
+
+        let html = '';
+        favoriteIds.forEach(id => {
+            const p = currentListingsData.find(x => Number(x.id) === Number(id)) || {
+                id: id,
+                name: 'Favori Ev #' + id,
+                price: 120,
+                borough: 'Manhattan',
+                neighbourhood: 'New York'
+            };
+
+            html += `
+                <div class="fav-mini-card" onclick="appUI.selectPropertyById(${p.id})">
+                    <div class="fav-mini-info">
+                        <strong>$${p.price} / gece</strong>
+                        <span>${escapeHtml(p.borough || 'New York')}</span>
+                        <p style="font-size:0.7rem; color:#d1d5db; margin:0; text-overflow:ellipsis; overflow:hidden; whitespace:nowrap;">${escapeHtml(p.name)}</p>
+                    </div>
+                </div>
+            `;
+        });
+        favContainer.innerHTML = html;
+        renderFavoritesPage();
+    }
+
+    // Chart.js Instances
+    let donutChartInst = null;
+    let boroughChartInst = null;
+    let priceHistChartInst = null;
+    let monthlyLineChartInst = null;
+    let ratingBarChartInst = null;
+
+    // ── Document Ready Handler ──
+    document.addEventListener("DOMContentLoaded", function () {
+        initMap();
+        initCharts();
+        bindEvents();
+        fetchData();
+        // Load all DB property pins on map (independent of filters)
+        setTimeout(loadAllMapMarkers, 500);
+    });
+
+    // Fallback load safety for Chart.js initialization
+    window.addEventListener("load", function() {
+        if (!donutChartInst) {
+            initCharts();
+        }
+    });
+
+    // ─────────────────────────────────────
+    //  1. MAP INITIALIZATION & MARKERS
+    // ─────────────────────────────────────
+
+    function initMap() {
+        const mapEl = document.getElementById("map");
+        if (!mapEl) return;
+
+        map = L.map("map").setView([40.7128, -74.0060], 11);
+
+        L.tileLayer(
+            "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+            {
+                attribution: "&copy; OpenStreetMap"
+            }
+        ).addTo(map);
+
+        markersGroup = L.layerGroup().addTo(map);
+    }
+
+    // Google Maps Style Red Pin SVG Icon for Leaflet Map
+    const googleMapPinIcon = L.divIcon({
+        className: 'custom-google-map-pin',
+        html: `
+            <div style="position:relative; width:28px; height:36px; cursor:pointer;">
+                <svg width="28" height="36" viewBox="0 0 384 512" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.35));">
+                    <path fill="#ea4335" d="M172.268 501.67C26.97 291.031 0 269.413 0 192 0 85.961 85.961 0 192 0s192 85.961 192 192c0 77.413-26.97 99.031-172.268 309.67-9.535 13.774-29.93 13.773-39.464 0z"/>
+                    <circle cx="192" cy="192" r="70" fill="#ffffff"/>
+                    <path fill="#ea4335" d="M192 142c-27.614 0-50 22.386-50 50s22.386 50 50 50 50-22.386 50-50-22.386-50-50-50z"/>
+                </svg>
+            </div>
+        `,
+        iconSize: [28, 36],
+        iconAnchor: [14, 36],
+        popupAnchor: [0, -34]
+    });
+
+    function toggleMapTileLayer() {
+        if (!map) return;
+        currentTileIndex = (currentTileIndex + 1) % mapTiles.length;
+        
+        map.eachLayer(function (layer) {
+            if (layer instanceof L.TileLayer) {
+                map.removeLayer(layer);
+            }
+        });
+
+        L.tileLayer(mapTiles[currentTileIndex].url, { maxZoom: 19 }).addTo(map);
+    }
+
+    let markerMap = new Map();
+
+    // All-markers layer group (separate from filtered markersGroup)
+    let allMarkersGroup = null;
+    let allMarkersLoaded = false;
+
+    // Red Google Maps style SVG pin divIcon factory
+    function makeRedPinIcon() {
+        return L.divIcon({
+            className: 'custom-red-pin-wrap',
+            html: `<div style="position:relative;width:24px;height:32px;cursor:pointer;"><svg width="24" height="32" viewBox="0 0 384 512" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter:drop-shadow(0 3px 5px rgba(0,0,0,0.35));"><path fill="#ea4335" d="M172.268 501.67C26.97 291.031 0 269.413 0 192 0 85.961 85.961 0 192 0s192 85.961 192 192c0 77.413-26.97 99.031-172.268 309.67-9.535 13.774-29.93 13.773-39.464 0z"/><circle cx="192" cy="192" r="64" fill="#fff"/></svg></div>`,
+            iconSize: [24, 32],
+            iconAnchor: [12, 32],
+            popupAnchor: [0, -32]
+        });
+    }
+
+    function loadAllMapMarkers() {
+        if (allMarkersLoaded || !map) return;
+
+        // MarkerCluster Group — 48K pini performanslı gösterir
+        if (typeof L.markerClusterGroup === 'function') {
+            allMarkersGroup = L.markerClusterGroup({
+                chunkedLoading: true,
+                chunkInterval: 200,
+                chunkDelay: 50,
+                maxClusterRadius: 60,
+                spiderfyOnMaxZoom: true,
+                showCoverageOnHover: false,
+                zoomToBoundsOnClick: true,
+                iconCreateFunction: function (cluster) {
+                    const count = cluster.getChildCount();
+                    let size = 'small', sz = 34;
+                    if (count >= 100) { size = 'medium'; sz = 42; }
+                    if (count >= 1000) { size = 'large'; sz = 52; }
+                    return L.divIcon({
+                        html: `<div style="background:linear-gradient(135deg,#ea4335,#c0392b);color:#fff;width:${sz}px;height:${sz}px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:${sz > 40 ? '0.85' : '0.75'}rem;box-shadow:0 3px 10px rgba(234,67,53,0.5);border:3px solid #fff;">${count > 999 ? Math.round(count/1000)+'K' : count}</div>`,
+                        className: 'red-cluster-icon',
+                        iconSize: L.point(sz, sz)
+                    });
+                }
+            });
+        } else {
+            allMarkersGroup = L.layerGroup();
+        }
+
+        fetch('/Home/GetAllMapMarkers')
+            .then(res => res.json())
+            .then(data => {
+                if (!data || data.length === 0) return;
+                const markers = [];
+                data.forEach(item => {
+                    let lat = Number(item.latitude ?? item.Latitude ?? 0);
+                    let lng = Number(item.longitude ?? item.Longitude ?? 0);
+                    if (Math.abs(lat) > 90) lat = lat / 100000.0;
+                    if (Math.abs(lng) > 180) lng = lng / 100000.0;
+
+                    const itemId = item.id ?? item.Id;
+                    const name = item.name ?? item.Name ?? 'Kiralık Ev';
+                    const price = item.price ?? item.Price ?? '–';
+                    const borough = item.borough ?? item.Borough ?? '';
+                    const neighbourhood = item.neighbourhood ?? item.Neighbourhood ?? '';
+                    const roomType = item.roomType ?? item.RoomType ?? 'Tüm Ev';
+
+                    if (!lat || !lng) return;
+
+                    const marker = L.marker([lat, lng], { icon: makeRedPinIcon() });
+
+                    marker.bindPopup(`
+                        <div style="font-family:Inter,sans-serif;padding:8px 10px;max-width:220px;">
+                            <div style="font-size:0.7rem;font-weight:600;color:#ea4335;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">${escapeHtml(borough)}${neighbourhood ? ' · ' + escapeHtml(neighbourhood) : ''}</div>
+                            <strong style="font-size:0.85rem;color:#0f172a;display:block;margin-bottom:6px;line-height:1.35;">${escapeHtml(name)}</strong>
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                                <span style="color:#ea4335;font-weight:800;font-size:1rem;">$${price}<small style="font-weight:400;color:#64748b;font-size:0.75rem;"> / gece</small></span>
+                                <span style="background:#f1f5f9;color:#475569;font-size:0.7rem;font-weight:600;padding:2px 7px;border-radius:99px;">${escapeHtml(roomType)}</span>
+                            </div>
+                            <button onclick="appUI.selectPropertyById(${itemId})" style="background:linear-gradient(135deg,#ea4335,#c0392b);color:#fff;border:none;padding:7px 14px;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;width:100%;letter-spacing:0.3px;">🏠 Detayları İncele</button>
+                        </div>
+                    `, { maxWidth: 240 });
+
+                    markers.push(marker);
+                    if (itemId) markerMap.set(Number(itemId), marker);
+                });
+
+                if (allMarkersGroup.addLayers) {
+                    allMarkersGroup.addLayers(markers);
+                } else {
+                    markers.forEach(m => m.addTo(allMarkersGroup));
+                }
+                map.addLayer(allMarkersGroup);
+                allMarkersLoaded = true;
+                console.log(`✅ Haritaya ${markers.length} ev pini yüklendi.`);
+            })
+            .catch(err => console.error('Map markers load error:', err));
+    }
+
+    function updateMapMarkers(markersData) {
+        if (!map || !markersGroup) return;
+        markersGroup.clearLayers();
+        if (!markersData || markersData.length === 0) return;
+
+        markersData.forEach(item => {
+            let lat = Number(item.latitude ?? item.Latitude ?? 0);
+            let lng = Number(item.longitude ?? item.Longitude ?? 0);
+            if (Math.abs(lat) > 90) lat = lat / 100000.0;
+            if (Math.abs(lng) > 180) lng = lng / 100000.0;
+
+            const itemId = item.id ?? item.Id;
+            const name = item.name ?? item.Name ?? 'Kiralık Ev';
+            const price = item.price ?? item.Price ?? '–';
+            const borough = item.borough ?? item.Borough ?? '';
+            const neighbourhood = item.neighbourhood ?? item.Neighbourhood ?? '';
+            const roomType = item.roomType ?? item.RoomType ?? 'Tüm Ev';
+
+            if (!lat || !lng) return;
+
+            const marker = L.marker([lat, lng], { icon: makeRedPinIcon() });
+            marker.bindPopup(`
+                <div style="font-family:Inter,sans-serif;padding:8px 10px;max-width:220px;">
+                    <div style="font-size:0.7rem;font-weight:600;color:#ea4335;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">${escapeHtml(borough)}${neighbourhood ? ' · ' + escapeHtml(neighbourhood) : ''}</div>
+                    <strong style="font-size:0.85rem;color:#0f172a;display:block;margin-bottom:6px;line-height:1.35;">${escapeHtml(name)}</strong>
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                        <span style="color:#ea4335;font-weight:800;font-size:1rem;">$${price}<small style="font-weight:400;color:#64748b;font-size:0.75rem;"> / gece</small></span>
+                        <span style="background:#f1f5f9;color:#475569;font-size:0.7rem;font-weight:600;padding:2px 7px;border-radius:99px;">${escapeHtml(roomType)}</span>
+                    </div>
+                    <button onclick="appUI.selectPropertyById(${itemId})" style="background:linear-gradient(135deg,#ea4335,#c0392b);color:#fff;border:none;padding:7px 14px;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;width:100%;letter-spacing:0.3px;">🏠 Detayları İncele</button>
+                </div>
+            `, { maxWidth: 240 });
+
+            markersGroup.addLayer(marker);
+            if (itemId) markerMap.set(Number(itemId), marker);
+        });
+    }
+
+    // ─────────────────────────────────────
+    //  2. CHARTS (CHART.JS) INITIALIZATION
+    // ─────────────────────────────────────
+
+    function initCharts() {
+        // A. Donut Chart (Oda Tipine Göre Dağılım - Yuvarlak Grafik)
+        const donutCtx = document.getElementById('roomTypeDonutChart')?.getContext('2d');
+        if (donutCtx) {
+            donutChartInst = new Chart(donutCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Entire Home', 'Private Room', 'Shared Room'],
+                    datasets: [{
+                        data: [25604, 21054, 2237],
+                        backgroundColor: ['#eb5757', '#3b82f6', '#f59e0b'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff',
+                        hoverOffset: 6
+                    }]
+                },
+                options: {
+                    cutout: '68%',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const val = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const pct = Math.round((val / total) * 100);
+                                    return ` ${context.label}: %${pct} (${val.toLocaleString('tr-TR')} ev)`;
+                                }
+                            }
+                        }
+                    },
+                    animation: { animateScale: true, animateRotate: true },
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        // B. Horizontal Bar Chart (Mahallelere Göre Ortalama Fiyat)
+        const boroughCtx = document.getElementById('boroughBarChart')?.getContext('2d');
+        if (boroughCtx) {
+            boroughChartInst = new Chart(boroughCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island'],
+                    datasets: [{
+                        label: 'Ortalama Fiyat',
+                        data: [196, 124, 99, 78, 73],
+                        backgroundColor: ['#eb5757', '#eb5757', '#eb5757', '#eb5757', '#eb5757'],
+                        borderRadius: 6,
+                        barThickness: 12
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    return ` Gecelik Ort. Fiyat: $${context.raw}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(0,0,0,0.04)' },
+                            ticks: {
+                                callback: function (val) { return '$' + val; },
+                                font: { size: 10, family: 'Inter' }
+                            }
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: { font: { size: 10, weight: '600', family: 'Inter' } }
+                        }
+                    },
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        // C. Price Histogram
+        const priceHistCtx = document.getElementById('priceHistChart')?.getContext('2d');
+        if (priceHistCtx) {
+            priceHistChartInst = new Chart(priceHistCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['$0', '$50', '$100', '$150', '$200', '$250', '$300', '$500+'],
+                    datasets: [{
+                        data: [12, 45, 89, 120, 75, 40, 25, 10],
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 3
+                    }]
+                },
+                options: {
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { font: { size: 9 } } },
+                        y: { grid: { display: false }, ticks: { font: { size: 9 } } }
+                    },
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        // D. Monthly Price Line Chart
+        const lineCtx = document.getElementById('monthlyLineChart')?.getContext('2d');
+        if (lineCtx) {
+            monthlyLineChartInst = new Chart(lineCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'],
+                    datasets: [{
+                        data: [110, 115, 125, 140, 155, 170, 185, 180, 160, 145, 130, 150],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        borderWidth: 2,
+                        pointRadius: 2
+                    }]
+                },
+                options: {
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { font: { size: 8 } } },
+                        y: { grid: { display: false }, ticks: { font: { size: 8 } } }
+                    },
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        // E. Rating Bar Chart (Yorum Puanı Dağılımı)
+        const ratingCtx = document.getElementById('ratingBarChart')?.getContext('2d');
+        if (ratingCtx) {
+            window.ratingBarChartInst = new Chart(ratingCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['5★ (Mükemmel)', '4★ (Çok İyi)', '3★ (İyi)', '2★ (Orta)', '1★ (Düşük)'],
+                    datasets: [{
+                        data: [68, 22, 7, 2, 1],
+                        backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#f97316', '#ef4444'],
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { font: { size: 8 } } },
+                        y: { grid: { display: false }, ticks: { font: { size: 8 }, callback: v => '%' + v } }
+                    },
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        // F. Statistics Page Full Bar Chart (statBoroughChart)
+        const statBoroughCtx = document.getElementById('statBoroughChart')?.getContext('2d');
+        if (statBoroughCtx) {
+            window.statBoroughChartInst = new Chart(statBoroughCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island'],
+                    datasets: [{
+                        label: 'Gecelik Ortalama Fiyat ($)',
+                        data: [196, 124, 99, 78, 73],
+                        backgroundColor: ['#f43f5e', '#6366f1', '#10b981', '#f59e0b', '#8b5cf6'],
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { font: { size: 11, weight: '700' }, color: '#64748b' } },
+                        y: { grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { callback: v => '$' + v, font: { size: 11 }, color: '#64748b' } }
+                    },
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        // G. Statistics Page Full Pie Chart (statRoomTypeChart)
+        const statRoomCtx = document.getElementById('statRoomTypeChart')?.getContext('2d');
+        if (statRoomCtx) {
+            window.statRoomTypeChartInst = new Chart(statRoomCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Entire Home / Apt', 'Private Room', 'Shared Room'],
+                    datasets: [{
+                        data: [25604, 21054, 2237],
+                        backgroundColor: ['#f43f5e', '#6366f1', '#f59e0b'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    plugins: { legend: { position: 'bottom', labels: { font: { size: 11, weight: '600' }, color: '#64748b', usePointStyle: true } } },
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+    }
+
+    // ─────────────────────────────────────
+    //  3. EVENT BINDINGS
+    // ─────────────────────────────────────
+
+    function bindEvents() {
+        // Top search bar sync & Live Search
+        const topSearch = document.getElementById('topSearchInput');
+        const keywordInput = document.getElementById('keywordInput');
+        const selSortBy = document.getElementById('selSortBy');
+
+        if (selSortBy) {
+            selSortBy.addEventListener('change', function () {
+                fetchData(1, false);
+            });
+        }
+
+        if (topSearch) {
+            topSearch.addEventListener('input', function () {
+                if (keywordInput) keywordInput.value = topSearch.value;
+                fetchData();
+            });
+        }
+
+        if (keywordInput) {
+            keywordInput.addEventListener('input', function () {
+                if (topSearch) topSearch.value = keywordInput.value;
+                fetchData();
+            });
+        }
+    }
+
+    // ─────────────────────────────────────
+    //  4. DATA FETCHING (AJAX API)
+    // ─────────────────────────────────────
+
+    function fetchData(page = 1, isManualSubmit = false) {
+        const keyVal = document.getElementById('keywordInput')?.value?.trim();
+        const topVal = document.getElementById('topSearchInput')?.value?.trim();
+        const search = keyVal || topVal || '';
+        const priceInput = document.getElementById('priceRangeInput');
+        const maxPrice = (priceInput && Number(priceInput.value) >= Number(priceInput.max)) ? '' : priceInput?.value;
+        const borough = document.getElementById('selBorough')?.value;
+        const minNights = document.getElementById('selMinNights')?.value;
+        const minReviews = document.getElementById('reviewsRangeInput')?.value;
+        
+        const sortSelect = document.getElementById("selSortBy");
+        const sortBy = sortSelect ? sortSelect.value : "";
+        console.log("Sort Select:", sortSelect);
+        console.log("Sort Value:", sortBy);
+
+        // Selected Room Types
+        const selectedRooms = [];
+        document.querySelectorAll('.chk-room:checked').forEach(chk => selectedRooms.push(chk.value));
+        const roomTypesStr = selectedRooms.join(',');
+
+        const params = new URLSearchParams({
+            search: search,
+            maxPrice: maxPrice || '',
+            roomTypes: roomTypesStr,
+            borough: borough || '',
+            minNights: minNights || '',
+            minReviews: minReviews || '',
+            sortBy: sortBy || 'recommended',
+            page: page,
+            pageSize: 8
+        });
+
+        console.log(params.toString());
+
+        fetch('/Home/GetRentals?' + params.toString())
+            .then(res => res.json())
+            .then(data => {
+                const listings = data.listings || data.Listings || [];
+                const stats = data.stats || data.Stats || {};
+                const pagination = data.pagination || data.Pagination || {};
+                const mapMarkers = data.mapMarkers || data.MapMarkers || [];
+                const popularListings = data.popularListings || data.PopularListings || [];
+                const charts = data.charts || data.Charts || {};
+
+                currentListingsData = listings;
+                updateStats(stats);
+                renderListingsGrid(listings);
+                renderPagination(pagination);
+                updateMapMarkers(mapMarkers && mapMarkers.length > 0 ? mapMarkers : listings);
+                renderPopularWidget(popularListings);
+                renderFavoritesDrawer();
+                updateChartsWithData(charts);
+
+                // If user clicked Ara & Filtrele button, smoothly scroll to listings grid
+                if (isManualSubmit) {
+                    const gridEl = document.getElementById('listingsGrid');
+                    if (gridEl) gridEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            })
+            .catch(err => {
+                console.error('Data loading error:', err);
+            });
+    }
+
+    // ─────────────────────────────────────
+    //  5. UI RENDER FUNCTIONS
+    // ─────────────────────────────────────
+
+    function updateStats(stats) {
+        if (!stats) return;
+        document.getElementById('kpiTotalHouses').textContent = (stats.totalCount || 48895).toLocaleString('tr-TR');
+        document.getElementById('kpiAvgPrice').textContent = '$' + (stats.avgPrice || 152).toLocaleString('tr-TR');
+        document.getElementById('kpiMaxPrice').textContent = '$' + (stats.maxPrice || 10000).toLocaleString('tr-TR') + '+';
+        document.getElementById('kpiMinPrice').textContent = '$' + (stats.minPrice || 10).toLocaleString('tr-TR');
+        document.getElementById('kpiTotalReviews').textContent = formatCompactNumber(stats.totalReviews || 1520000);
+        document.getElementById('kpiAvgRating').textContent = (stats.avgRating || 4.62).toString();
+        
+        document.getElementById('listingsCountTxt').textContent = '(' + (stats.totalCount || 48895).toLocaleString('tr-TR') + ' sonuç)';
+    }
+
+    function formatCompactNumber(num) {
+        if (num >= 1000000) return (num / 1000000).toFixed(2) + 'M';
+        if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+        return num.toString();
+    }
+
+    function renderListingsGrid(listings) {
+        const gridContainer = document.getElementById('listingsGrid');
+        if (!gridContainer) return;
+
+        console.log("==> RENDER EDİLEN İLK KART FİYATI:", listings && listings.length > 0 ? listings[0].price : "Yok");
+
+        if (!listings || listings.length === 0) {
+            gridContainer.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: var(--text-muted);">Sonuç bulunamadı. Filtrelerinizi değiştirin.</div>';
+            return;
+        }
+
+        let html = '';
+        listings.forEach(item => {
+            const isFav = favoriteIds.has(item.id);
+            const favClass = isFav ? 'active' : '';
+            const heartIcon = isFav ? 'fa-solid fa-heart' : 'fa-regular fa-heart';
+
+            html += `
+                <div class="property-card no-img-card" onclick="appUI.selectPropertyById(${item.id})">
+                    <div class="card-text-header">
+                        <div class="card-price-badge-inline">$${item.price} <small>/ gece</small></div>
+                        <button class="fav-btn ${favClass}" onclick="event.stopPropagation(); appUI.toggleFavorite(${item.id}, this)">
+                            <i class="${heartIcon}"></i>
+                        </button>
+                    </div>
+                    <div class="card-body-content">
+                        <h4 class="prop-title" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</h4>
+                        <p class="prop-loc">📍 ${escapeHtml(item.neighbourhood)}, ${escapeHtml(item.borough)}</p>
+                        <div class="prop-amenities">
+                            <span><i class="fa-solid fa-house-chimney"></i> ${escapeHtml(item.roomType)}</span>
+                            <span><i class="fa-solid fa-user"></i> Ev Sahibi: ${escapeHtml(item.hostName || 'Belirtilmemiş')}</span>
+                        </div>
+                        <div class="prop-rating">
+                            <i class="fa-solid fa-star icon-star"></i> ${item.rating} <span style="font-weight:400; color:var(--text-muted);">(${item.reviews} yorum)</span>
+                            <span class="min-nights-badge">🌙 Min. ${item.minNights} Gece</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        gridContainer.innerHTML = html;
+    }
+
+    function renderPagination(pagination) {
+        const container = document.getElementById('paginationContainer');
+        if (!container || !pagination) return;
+
+        const current = pagination.currentPage;
+        const total = pagination.totalPages || 2041;
+
+        let html = `<button class="page-btn" onclick="appUI.fetchData(${Math.max(1, current - 1)})">&lt;</button>`;
+
+        let pages = [1, 2, 3, 4, 5];
+        if (current > 3 && current < total - 2) {
+            pages = [current - 2, current - 1, current, current + 1, current + 2];
+        }
+
+        pages.forEach(p => {
+            if (p <= total) {
+                const active = p === current ? 'active' : '';
+                html += `<button class="page-btn ${active}" onclick="appUI.fetchData(${p})">${p}</button>`;
+            }
+        });
+
+        if (total > 5) {
+            html += `<span style="font-size:0.75rem; color:var(--text-muted);">...</span>`;
+            html += `<button class="page-btn" onclick="appUI.fetchData(${total})">${total}</button>`;
+        }
+
+        html += `<button class="page-btn" onclick="appUI.fetchData(${Math.min(total, current + 1)})">&gt;</button>`;
+        container.innerHTML = html;
+    }
+
+    function renderPopularWidget(popularListings) {
+        const container = document.getElementById('popularListContainer');
+        if (!container || !popularListings || popularListings.length === 0) return;
+
+        let html = '';
+        popularListings.forEach((item, idx) => {
+            const img = item.imageUrl || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=300&q=80';
+            html += `
+                <div class="popular-item" onclick="appUI.selectPropertyById(${item.id})">
+                    <div class="rank-badge">${idx + 1}</div>
+                    <img src="${img}" class="pop-thumb" alt="${escapeHtml(item.name)}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=300&q=80';" />
+                    <div class="pop-info">
+                        <h5 title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</h5>
+                        <p><i class="fa-solid fa-star icon-star"></i> ${item.rating} • <strong>$${item.price}</strong> / gece</p>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+
+
+    function updateChartsWithData(chartsData) {
+        if (!chartsData) return;
+
+        const roomTypes = chartsData.roomTypes || chartsData.RoomTypes || [];
+        const boroughPrices = chartsData.boroughPrices || chartsData.BoroughPrices || [];
+
+        // 1. Yuvarlak Donut Grafik (Oda Tipine Göre Dağılım)
+        if (donutChartInst && roomTypes.length > 0) {
+            const labels = roomTypes.map(x => x.roomType || x.RoomType);
+            const counts = roomTypes.map(x => x.count || x.Count);
+            const total = counts.reduce((a, b) => a + b, 0);
+
+            donutChartInst.data.labels = labels;
+            donutChartInst.data.datasets[0].data = counts;
+            donutChartInst.update();
+
+            // Legend alanını dinamik yüzdelerle güncelleme
+            const legendContainer = document.getElementById('donutLegendContainer');
+            if (legendContainer && total > 0) {
+                const colorMap = {
+                    'Entire home/apt': { color: 'dot-coral', name: 'Entire Home' },
+                    'Private room': { color: 'dot-blue', name: 'Private Room' },
+                    'Shared room': { color: 'dot-yellow', name: 'Shared Room' }
+                };
+
+                let legendHtml = '';
+                roomTypes.forEach(item => {
+                    const rType = item.roomType || item.RoomType;
+                    const rCount = item.count || item.Count;
+                    const pct = Math.round((rCount / total) * 100);
+                    const info = colorMap[rType] || { color: 'dot-coral', name: rType };
+                    
+                    legendHtml += `
+                        <div class="legend-row">
+                            <span class="dot ${info.color}"></span>
+                            <span class="legend-name">${info.name}</span>
+                            <strong class="legend-pct">%${pct} <small>(${rCount.toLocaleString('tr-TR')})</small></strong>
+                        </div>
+                    `;
+                });
+                legendContainer.innerHTML = legendHtml;
+            }
+        }
+
+        // 2. Mahallelere Göre Ortalama Fiyat (Yatay Çubuk Grafik)
+        if (boroughChartInst && boroughPrices.length > 0) {
+            const labels = boroughPrices.map(x => x.borough || x.Borough);
+            const prices = boroughPrices.map(x => x.avgPrice || x.AvgPrice);
+
+            boroughChartInst.data.labels = labels;
+            boroughChartInst.data.datasets[0].data = prices;
+            boroughChartInst.update();
+        }
+    }
+
+    // ─────────────────────────────────────
+    //  6. INTERACTION & MODALS HANDLERS
+    // ─────────────────────────────────────
+
+
+
+    function selectPropertyById(id) {
+        console.log("currentListingsData:", currentListingsData);
+        console.log("Target ID:", id);
+        const targetId = Number(id);
+        let p = currentListingsData.find(x => Number(x.id) === targetId);
+        console.log("Found Property:", p);
+        if (!p) {
+            // Fallback for static elements or dynamic IDs
+            p = {
+                id: targetId,
+                name: 'Harika Konumda Lüks Daire #' + targetId,
+                neighbourhood: 'Manhattan',
+                borough: 'New York',
+                beds: (targetId % 3) + 1,
+                guests: (targetId % 4) + 2,
+                roomType: 'Entire home/apt',
+                rating: 4.85,
+                reviews: 110,
+                price: 10,
+                imageUrl: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=600&q=80'
+            };
+        }
+
+        activeProperty = p;
+
+        // Show Map Popup Card Overlay
+        const popupCard = document.getElementById('mapPopupCard');
+        if (popupCard) {
+            document.getElementById('popImg').src = p.imageUrl;
+            document.getElementById('popTitle').textContent = p.name;
+            document.getElementById('popLoc').textContent = '📍 ' + p.neighbourhood + ', ' + p.borough;
+            document.getElementById('popBeds').innerHTML = `<i class="fa-solid fa-bed"></i> ${p.beds} yatak`;
+            document.getElementById('popGuests').innerHTML = `<i class="fa-solid fa-user-group"></i> ${p.guests} misafir`;
+            document.getElementById('popRoomType').innerHTML = `<i class="fa-solid fa-house-chimney"></i> ${p.roomType}`;
+            document.getElementById('popRating').textContent = p.rating;
+            document.getElementById('popReviews').textContent = `(${p.reviews} yorum)`;
+            document.getElementById('popPrice').textContent = '$' + p.price;
+
+            popupCard.classList.add('show');
+        }
+
+        // Highlight active property marker on map
+        document.querySelectorAll('.custom-map-price-marker').forEach(el => el.classList.remove('selected-active-marker'));
+        const activeMarkerEl = document.getElementById('mapMarker_' + p.id);
+        if (activeMarkerEl) {
+            activeMarkerEl.classList.add('selected-active-marker');
+        }
+
+        // Fly map to location with close zoom level
+        if (map && p.latitude && p.longitude) {
+            map.flyTo([p.latitude, p.longitude], 15, { duration: 1.0 });
+
+            // Trigger popup on Leaflet marker if exists
+            const markerInst = markerMap.get(targetId);
+            if (markerInst) {
+                markerInst.openPopup();
+            }
+        }
+        // Directly open full detail modal on image click
+        openDetailModal();
+    }
+
+    function closeMapPopup() {
+        const popupCard = document.getElementById('mapPopupCard');
+        if (popupCard) popupCard.classList.remove('show');
+    }
+
+    function openDetailModal() {
+        if (!activeProperty) return;
+        const modal = document.getElementById('detailModalOverlay');
+        if (!modal) return;
+
+        document.getElementById('detailModalImg').src = activeProperty.imageUrl;
+        document.getElementById('modalTitle').textContent = activeProperty.name;
+        document.getElementById('modalLocation').textContent = '📍 ' + activeProperty.neighbourhood + ', ' + activeProperty.borough + ', New York, ABD';
+        document.getElementById('modalBadgeRoom').textContent = activeProperty.roomType;
+        document.getElementById('modalBadgeBorough').textContent = activeProperty.borough;
+        document.getElementById('modalBeds').textContent = activeProperty.beds + ' Yatak';
+        document.getElementById('modalGuests').textContent = activeProperty.guests + ' Misafir';
+        document.getElementById('modalRating').textContent = activeProperty.rating + ' Puan';
+        document.getElementById('modalReviews').textContent = activeProperty.reviews + ' Yorum';
+        document.getElementById('modalPrice').textContent = '$' + activeProperty.price;
+
+        modal.classList.add('show');
+    }
+
+    function closeDetailModal() {
+        const modal = document.getElementById('detailModalOverlay');
+        if (modal) modal.classList.remove('show');
+    }
+
+    function toggleTheme() {
+        const html = document.documentElement;
+        const icon = document.getElementById('themeIcon');
+        if (html.getAttribute('data-theme') === 'dark') {
+            html.setAttribute('data-theme', 'light');
+            if (icon) icon.className = 'fa-solid fa-moon';
+        } else {
+            html.setAttribute('data-theme', 'dark');
+            if (icon) icon.className = 'fa-solid fa-sun';
+        }
+    }
+
+    function toggleNotifications() {
+        const notif = document.getElementById('notifModal');
+        if (notif) notif.classList.toggle('show');
+        const userM = document.getElementById('userModal');
+        if (userM) userM.classList.remove('show');
+    }
+
+    function toggleUserMenu() {
+        const userM = document.getElementById('userModal');
+        if (userM) userM.classList.toggle('show');
+        const notif = document.getElementById('notifModal');
+        if (notif) notif.classList.remove('show');
+    }
+
+    function toggleFavoritesDrawer() {
+        const drawer = document.getElementById('favoritesDrawer');
+        const favTabBtn = document.querySelector('.fav-tab');
+        if (drawer) {
+            const isOpened = drawer.style.transform === 'translateY(0)';
+            if (isOpened) {
+                drawer.style.transform = 'translateY(120px)';
+                if (favTabBtn) favTabBtn.classList.remove('active');
+            } else {
+                drawer.style.transform = 'translateY(0)';
+                if (favTabBtn) favTabBtn.classList.add('active');
+            }
+        }
+    }
+
+    function switchTab(tabName) {
+        const activeLink = document.querySelector(`.nav-item[onclick*="${tabName}"]`);
+        const isAlreadyActive = activeLink && activeLink.classList.contains('active');
+
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+
+        const exploreSec = document.getElementById('exploreSection');
+        const exploreDetail = document.getElementById('exploreDetailView');
+        const statSec = document.getElementById('statisticsSection');
+        const mapContainer = document.getElementById('mapSectionContainer');
+
+        if (tabName === 'map') {
+            if (isAlreadyActive && mapContainer && mapContainer.classList.contains('expanded')) {
+                toggleMapExpand(false);
+                const homeLink = document.querySelector(`.nav-item[onclick*="home"]`);
+                if (homeLink) homeLink.classList.add('active');
+            } else {
+                if (activeLink) activeLink.classList.add('active');
+                if (exploreSec) exploreSec.style.display = 'none';
+                if (exploreDetail) exploreDetail.style.display = 'none';
+                if (statSec) statSec.style.display = 'none';
+                toggleMapExpand(true);
+            }
+        } else if (tabName === 'explore') {
+            if (activeLink) activeLink.classList.add('active');
+            if (mapContainer && mapContainer.classList.contains('expanded')) {
+                toggleMapExpand(false);
+            }
+            if (exploreDetail) exploreDetail.style.display = 'none';
+            if (statSec) statSec.style.display = 'none';
+            if (exploreSec) exploreSec.style.display = 'block';
+            exploreSec?.scrollIntoView({ behavior: 'smooth' });
+        } else if (tabName === 'statistics') {
+            if (activeLink) activeLink.classList.add('active');
+            if (mapContainer && mapContainer.classList.contains('expanded')) {
+                toggleMapExpand(false);
+            }
+            if (exploreSec) exploreSec.style.display = 'none';
+            if (exploreDetail) exploreDetail.style.display = 'none';
+            const favSec = document.getElementById('favoritesSection');
+            if (favSec) favSec.style.display = 'none';
+            const compSec = document.getElementById('compareSection');
+            if (compSec) compSec.style.display = 'none';
+            if (statSec) statSec.style.display = 'block';
+            statSec?.scrollIntoView({ behavior: 'smooth' });
+        } else if (tabName === 'compare') {
+            if (activeLink) activeLink.classList.add('active');
+            if (mapContainer && mapContainer.classList.contains('expanded')) {
+                toggleMapExpand(false);
+            }
+            if (exploreSec) exploreSec.style.display = 'none';
+            if (exploreDetail) exploreDetail.style.display = 'none';
+            if (statSec) statSec.style.display = 'none';
+            const favSec = document.getElementById('favoritesSection');
+            if (favSec) favSec.style.display = 'none';
+            const compSec = document.getElementById('compareSection');
+            if (compSec) compSec.style.display = 'block';
+            renderComparePage();
+            compSec?.scrollIntoView({ behavior: 'smooth' });
+        } else if (tabName === 'favorites') {
+            if (activeLink) activeLink.classList.add('active');
+            if (mapContainer && mapContainer.classList.contains('expanded')) {
+                toggleMapExpand(false);
+            }
+            if (exploreSec) exploreSec.style.display = 'none';
+            if (exploreDetail) exploreDetail.style.display = 'none';
+            if (statSec) statSec.style.display = 'none';
+            const compSec = document.getElementById('compareSection');
+            if (compSec) compSec.style.display = 'none';
+            const favSec = document.getElementById('favoritesSection');
+            if (favSec) favSec.style.display = 'block';
+            renderFavoritesPage();
+            favSec?.scrollIntoView({ behavior: 'smooth' });
+        } else {
+            if (activeLink) activeLink.classList.add('active');
+            if (mapContainer && mapContainer.classList.contains('expanded')) {
+                toggleMapExpand(false);
+            }
+            if (exploreSec) exploreSec.style.display = 'none';
+            if (exploreDetail) exploreDetail.style.display = 'none';
+            if (statSec) statSec.style.display = 'none';
+            const favSec = document.getElementById('favoritesSection');
+            if (favSec) favSec.style.display = 'none';
+            const compSec = document.getElementById('compareSection');
+            if (compSec) compSec.style.display = 'none';
+            fetchData();
+        }
+    }
+
+    let activeBoroughModalName = '';
+
+    const boroughData = {
+        'Manhattan': {
+            title: 'Manhattan Bölge Rehberi',
+            subtitle: "New York'un simgesel gökdelenleri, Broadway tiyatroları ve 24 saat kesintisiz yaşayan finans & kültür kalbi.",
+            avgPrice: '$196',
+            totalListings: '21.661',
+            avgRating: '4.85 / 5',
+            attractions: 'Times Square, Central Park, Empire State Binası, Wall Street, Greenwich Village, Soho, High Line Park.',
+            imageUrl: 'https://images.unsplash.com/photo-1534430480872-3498386e7856?auto=format&fit=crop&w=800&q=80',
+            badge: 'Lüks & Finans Merkezi'
+        },
+        'Brooklyn': {
+            title: 'Brooklyn Bölge Rehberi',
+            subtitle: "Sanat galerileri, gurme kahve dükkanları, hipster kültürü ve muhteşem Manhattan silüeti manzaraları.",
+            avgPrice: '$124',
+            totalListings: '20.104',
+            avgRating: '4.80 / 5',
+            attractions: 'Brooklyn Köprüsü, Williamsburg, DUMBO, Prospect Park, Brooklyn Müzesi, Coney Island.',
+            imageUrl: 'https://images.unsplash.com/photo-1543716091-a840c05249ec?auto=format&fit=crop&w=800&q=80',
+            badge: 'Sanat & Hipster Ruhu'
+        },
+        'Queens': {
+            title: 'Queens Bölge Rehberi',
+            subtitle: "Etnik çeşitlilik, dünya mutfaklarından lezzetler, bütçe dostu konaklama seçenekleri ve parklar.",
+            avgPrice: '$99',
+            totalListings: '5.666',
+            avgRating: '4.72 / 5',
+            attractions: 'Astoria Park, Flushing Meadows Corona Park, Museum of the Moving Image, Citi Field Stadyumu.',
+            imageUrl: 'https://images.unsplash.com/photo-1518391846015-55a9cc003b25?auto=format&fit=crop&w=800&q=80',
+            badge: 'Kültür Mozaiği & Bütçe Dostu'
+        },
+        'Bronx': {
+            title: 'Bronx Bölge Rehberi',
+            subtitle: "Zengin hip-hop tarihi, beyzbol heyecanı, tarihi İtalyan mahallesi ve geniş botanik bahçeleri.",
+            avgPrice: '$87',
+            totalListings: '1.091',
+            avgRating: '4.65 / 5',
+            attractions: 'Yankee Stadyumu, New York Botanik Bahçesi, Bronx Hayvan Bahçesi, Arthur Avenue (Little Italy).',
+            imageUrl: 'https://images.unsplash.com/photo-1572953109213-3be62398eb95?auto=format&fit=crop&w=800&q=80',
+            badge: 'Tarih & Doğa Parkları'
+        }
+    };
+
+    const boroughGalleries = {
+        'Manhattan': [
+            'https://images.unsplash.com/photo-1534430480872-3498386e7856?auto=format&fit=crop&w=400&q=80',
+            'https://images.unsplash.com/photo-1506966953377-365002b07a73?auto=format&fit=crop&w=400&q=80',
+            'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&w=400&q=80'
+        ],
+        'Brooklyn': [
+            'https://images.unsplash.com/photo-1543716091-a840c05249ec?auto=format&fit=crop&w=400&q=80',
+            'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=400&q=80',
+            'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=400&q=80'
+        ],
+        'Queens': [
+            'https://images.unsplash.com/photo-1518391846015-55a9cc003b25?auto=format&fit=crop&w=400&q=80',
+            'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=400&q=80',
+            'https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=400&q=80'
+        ],
+        'Bronx': [
+            'https://images.unsplash.com/photo-1572953109213-3be62398eb95?auto=format&fit=crop&w=400&q=80',
+            'https://images.unsplash.com/photo-1502005229762-cf1b2da7c5d6?auto=format&fit=crop&w=400&q=80',
+            'https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=400&q=80'
+        ]
+    };
+
+    function openBoroughModal(boroughName) {
+        const detailView = document.getElementById('exploreDetailView');
+        const exploreCardsSection = document.getElementById('exploreSection');
+        const data = boroughData[boroughName];
+        if (!detailView || !data) return;
+
+        activeBoroughModalName = boroughName;
+
+        document.getElementById('bModalImg').src = data.imageUrl;
+        document.getElementById('bModalBadge').textContent = data.badge;
+        document.getElementById('bModalTitle').textContent = data.title;
+        document.getElementById('bModalSubtitle').textContent = data.subtitle;
+        document.getElementById('bModalAvgPrice').textContent = data.avgPrice;
+        document.getElementById('bModalTotalListings').textContent = data.totalListings;
+        document.getElementById('bModalAvgRating').textContent = data.avgRating;
+        document.getElementById('bModalAttractions').textContent = data.attractions;
+
+        const btnNameEl = document.getElementById('bModalBtnName');
+        if (btnNameEl) btnNameEl.textContent = boroughName;
+
+        // Render Gallery Photos
+        const galleryEl = document.getElementById('bModalGallery');
+        const photos = boroughGalleries[boroughName] || boroughGalleries['Manhattan'];
+        if (galleryEl && photos) {
+            galleryEl.innerHTML = photos.map(pUrl => `
+                <img src="${pUrl}" style="width:100%; height:140px; object-fit:cover; border-radius:10px;" alt="${boroughName}" />
+            `).join('');
+        }
+
+        // Render Featured Homes for this Borough
+        const featuredHomesEl = document.getElementById('bModalFeaturedHomes');
+        if (featuredHomesEl) {
+            const filteredList = currentListingsData.filter(x => (x.borough || '').toLowerCase() === boroughName.toLowerCase());
+            const displayList = (filteredList.length > 0 ? filteredList : currentListingsData).slice(0, 2);
+
+            let homesHtml = '';
+            displayList.forEach(item => {
+                homesHtml += `
+                    <div class="property-card no-img-card" style="padding:0.9rem;" onclick="appUI.closeBoroughModal(); appUI.selectPropertyById(${item.id})">
+                        <div class="card-text-header" style="margin-bottom:0.4rem;">
+                            <div class="card-price-badge-inline">$${item.price} <small>/ gece</small></div>
+                            <span style="font-size:0.78rem; color:var(--text-muted);"><i class="fa-solid fa-star icon-star"></i> ${item.rating}</span>
+                        </div>
+                        <div class="card-body-content">
+                            <h4 class="prop-title" style="font-size:0.88rem;" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</h4>
+                            <p class="prop-loc" style="font-size:0.75rem; margin:0;">📍 ${escapeHtml(item.neighbourhood)}, ${escapeHtml(item.borough)}</p>
+                        </div>
+                    </div>
+                `;
+            });
+            featuredHomesEl.innerHTML = homesHtml;
+        }
+
+        if (exploreCardsSection) exploreCardsSection.style.display = 'none';
+        detailView.style.display = 'block';
+        detailView.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function closeBoroughModal() {
+        const detailView = document.getElementById('exploreDetailView');
+        const exploreCardsSection = document.getElementById('exploreSection');
+        if (detailView) detailView.style.display = 'none';
+        if (exploreCardsSection) {
+            exploreCardsSection.style.display = 'block';
+            exploreCardsSection.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+
+    function applyBoroughFilterFromModal() {
+        closeBoroughModal();
+        if (activeBoroughModalName) {
+            filterByBoroughFromExplore(activeBoroughModalName);
+        }
+    }
+
+    function filterByBoroughFromExplore(boroughName) {
+        const boroughSel = document.getElementById('selBorough');
+        if (boroughSel) {
+            boroughSel.value = boroughName;
+        }
+        switchTab('home');
+        fetchData();
+    }
+
+    function updatePriceLabel(val) {
+        const badge = document.getElementById('rangeBadgeText');
+        const maxVal = document.getElementById('maxPriceVal');
+        if (badge) badge.textContent = '$10 - $' + val + (val >= 1000 ? '+' : '');
+        if (maxVal) maxVal.textContent = '$' + val + (val >= 1000 ? '+' : '');
+        fetchData();
+    }
+
+    function updateReviewsLabel(val) {
+        const badge = document.getElementById('reviewsBadgeText');
+        if (badge) badge.textContent = val + ' - 1000+';
+        fetchData();
+    }
+
+    function toggleAllRoomTypes(masterChk) {
+        document.querySelectorAll('.chk-room').forEach(chk => {
+            chk.checked = masterChk.checked;
+        });
+        fetchData();
+    }
+
+    function onRoomTypeChange() {
+        fetchData();
+    }
+
+    function clearFilters() {
+        document.getElementById('keywordInput').value = '';
+        document.getElementById('topSearchInput').value = '';
+        document.getElementById('priceRangeInput').value = 1000;
+        updatePriceLabel(1000);
+        document.getElementById('selBorough').value = '';
+        document.getElementById('selMinNights').value = '';
+        document.getElementById('reviewsRangeInput').value = 0;
+        updateReviewsLabel(0);
+        document.getElementById('chkRoomAll').checked = true;
+        document.querySelectorAll('.chk-room').forEach(chk => chk.checked = true);
+        document.getElementById('selSortBy').value = 'recommended';
+
+        fetchData();
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function toggleMapExpand(forceExpand = null) {
+        const container = document.getElementById('mapSectionContainer');
+        const icon = document.getElementById('mapExpandIcon');
+        if (!container) return;
+
+        let isExpanded = false;
+        if (forceExpand === true) {
+            container.classList.add('expanded');
+            isExpanded = true;
+        } else if (forceExpand === false) {
+            container.classList.remove('expanded');
+            isExpanded = false;
+        } else {
+            isExpanded = container.classList.toggle('expanded');
+        }
+
+        if (icon) {
+            if (isExpanded) {
+                icon.className = 'fa-solid fa-compress';
+                container.setAttribute('title', 'Haritayı Küçült');
+            } else {
+                icon.className = 'fa-solid fa-expand';
+                container.setAttribute('title', 'Haritayı Büyüt');
+            }
+        }
+
+        // Trigger Leaflet map resize event after transition
+        setTimeout(() => {
+            if (map) {
+                map.invalidateSize();
+            }
+        }, 350);
+    }
+
+    function toggleNavFilters() {
+        const overlay = document.getElementById('navFiltersOverlay');
+        if (overlay) {
+            overlay.classList.toggle('show');
+        }
+        const notif = document.getElementById('notifModal');
+        if (notif) notif.classList.remove('show');
+        const userM = document.getElementById('userModal');
+        if (userM) userM.classList.remove('show');
+    }
+
+    function toggleSidebarPanel() {
+        const grid = document.querySelector('.dashboard-grid');
+        const btn = document.querySelector('.filter-toggle-nav-btn');
+        if (grid) {
+            const isHidden = grid.classList.toggle('sidebar-hidden');
+            if (btn) {
+                if (isHidden) {
+                    btn.classList.remove('active');
+                } else {
+                    btn.classList.add('active');
+                }
+            }
+            // Trigger map resize so leaflet map smoothly adapts to full width
+            setTimeout(() => {
+                if (map) {
+                    map.invalidateSize();
+                }
+            }, 300);
+        }
+    }
+
+    // ─────────────────────────────────────
+    //  7. RESERVATION & BOOKING WORKFLOW
+    // ─────────────────────────────────────
+
+    function openBookingModal() {
+        closeDetailModal();
+        const bookingModal = document.getElementById('bookingModalOverlay');
+        if (!bookingModal) return;
+
+        if (activeProperty) {
+            const propTitle = document.getElementById('bookingPropTitle');
+            const roomTypeInput = document.getElementById('bookRoomTypeReadonly');
+            if (propTitle) propTitle.textContent = activeProperty.name;
+            if (roomTypeInput) roomTypeInput.value = activeProperty.roomType || 'Entire home/apt';
+        }
+
+        // Set default dates (Tomorrow -> 3 days later)
+        const checkInInput = document.getElementById('bookCheckIn');
+        const checkOutInput = document.getElementById('bookCheckOut');
+        
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const next3Days = new Date(tomorrow);
+        next3Days.setDate(next3Days.getDate() + 3);
+
+        if (checkInInput && !checkInInput.value) {
+            checkInInput.value = tomorrow.toISOString().split('T')[0];
+        }
+        if (checkOutInput && !checkOutInput.value) {
+            checkOutInput.value = next3Days.toISOString().split('T')[0];
+        }
+
+        calculateBookingTotal();
+        goToBookingStep(1);
+
+        // Reset success screen
+        document.getElementById('bookingForm').style.display = 'block';
+        document.getElementById('bookingSuccessScreen').style.display = 'none';
+
+        bookingModal.classList.add('show');
+    }
+
+    function closeBookingModal() {
+        const bookingModal = document.getElementById('bookingModalOverlay');
+        if (bookingModal) bookingModal.classList.remove('show');
+    }
+
+    function calculateBookingTotal() {
+        if (!activeProperty) return;
+        const pricePerNight = activeProperty.price || 120;
+        const checkInVal = document.getElementById('bookCheckIn')?.value;
+        const checkOutVal = document.getElementById('bookCheckOut')?.value;
+
+        let nightCount = 3;
+        if (checkInVal && checkOutVal) {
+            const d1 = new Date(checkInVal);
+            const d2 = new Date(checkOutVal);
+            const diffTime = d2 - d1;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            if (diffDays > 0) nightCount = diffDays;
+        }
+
+        const basePrice = pricePerNight * nightCount;
+        const cleaningFee = 45;
+        const serviceFee = 30;
+        const totalPrice = basePrice + cleaningFee + serviceFee;
+
+        document.getElementById('calcNightRate').innerHTML = `$${pricePerNight} x <strong id="calcNightCount">${nightCount} gece</strong>`;
+        document.getElementById('calcBasePrice').textContent = `$${basePrice}`;
+        document.getElementById('calcTotalPrice').textContent = `$${totalPrice}`;
+        document.getElementById('btnPayAmount').textContent = `$${totalPrice}`;
+    }
+
+    function showFieldError(inputId, errorText) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+
+        input.classList.add('input-error-border');
+
+        // Check if error message already exists
+        let parent = input.parentElement;
+        let errEl = parent.querySelector('.field-error-msg');
+        if (!errEl) {
+            errEl = document.createElement('div');
+            errEl.className = 'field-error-msg';
+            parent.appendChild(errEl);
+        }
+        errEl.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${errorText}`;
+    }
+
+    function clearFieldError(inputId) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+
+        input.classList.remove('input-error-border');
+        const parent = input.parentElement;
+        const errEl = parent.querySelector('.field-error-msg');
+        if (errEl) {
+            errEl.remove();
+        }
+    }
+
+    function validateBookingStep(currentStep) {
+        let isValid = true;
+
+        if (currentStep === 1) {
+            const checkInInput = document.getElementById('bookCheckIn');
+            const checkOutInput = document.getElementById('bookCheckOut');
+
+            clearFieldError('bookCheckIn');
+            clearFieldError('bookCheckOut');
+
+            if (!checkInInput?.value) {
+                showFieldError('bookCheckIn', 'Giriş tarihi boş bırakılamaz!');
+                isValid = false;
+            }
+            if (!checkOutInput?.value) {
+                showFieldError('bookCheckOut', 'Çıkış tarihi boş bırakılamaz!');
+                isValid = false;
+            }
+            if (checkInInput?.value && checkOutInput?.value && new Date(checkOutInput.value) <= new Date(checkInInput.value)) {
+                showFieldError('bookCheckOut', 'Çıkış tarihi, girişten sonra olmalıdır!');
+                isValid = false;
+            }
+        } else if (currentStep === 2) {
+            const firstName = document.getElementById('bookFirstName');
+            const lastName = document.getElementById('bookLastName');
+            const email = document.getElementById('bookEmail');
+            const phone = document.getElementById('bookPhone');
+
+            clearFieldError('bookFirstName');
+            clearFieldError('bookLastName');
+            clearFieldError('bookEmail');
+            clearFieldError('bookPhone');
+
+            if (!firstName?.value?.trim()) {
+                showFieldError('bookFirstName', 'Lütfen adınızı giriniz!');
+                isValid = false;
+            }
+            if (!lastName?.value?.trim()) {
+                showFieldError('bookLastName', 'Lütfen soyadınızı giriniz!');
+                isValid = false;
+            }
+            if (!email?.value?.trim() || !email.value.includes('@')) {
+                showFieldError('bookEmail', 'Geçerli bir e-posta giriniz!');
+                isValid = false;
+            }
+            if (!phone?.value?.trim() || phone.value.trim().length < 7) {
+                showFieldError('bookPhone', 'Geçerli bir telefon numarası giriniz!');
+                isValid = false;
+            }
+        } else if (currentStep === 3) {
+            const cardHolder = document.getElementById('cardHolder');
+            const cardNumber = document.getElementById('cardNumber');
+            const cardExpiry = document.getElementById('cardExpiry');
+            const cardCvc = document.getElementById('cardCvc');
+
+            clearFieldError('cardHolder');
+            clearFieldError('cardNumber');
+            clearFieldError('cardExpiry');
+            clearFieldError('cardCvc');
+
+            if (!cardHolder?.value?.trim()) {
+                showFieldError('cardHolder', 'Kart üzerindeki isim boş bırakılamaz!');
+                isValid = false;
+            }
+            if (!cardNumber?.value?.trim() || cardNumber.value.trim().length < 12) {
+                showFieldError('cardNumber', 'Geçerli bir kart numarası giriniz (16 hane)!');
+                isValid = false;
+            }
+            if (!cardExpiry?.value?.trim() || !cardExpiry.value.includes('/')) {
+                showFieldError('cardExpiry', 'Son kullanma tarihi MM/YY olmalıdır!');
+                isValid = false;
+            }
+            if (!cardCvc?.value?.trim() || cardCvc.value.trim().length < 3) {
+                showFieldError('cardCvc', 'CVC kodu 3 veya 4 haneli olmalıdır!');
+                isValid = false;
+            }
+        }
+
+        return isValid;
+    }
+
+    function goToBookingStep(stepNumber) {
+        // Find currently active step number
+        const activeContent = document.querySelector('.booking-step-content.active');
+        let currentStep = 1;
+        if (activeContent && activeContent.id) {
+            currentStep = parseInt(activeContent.id.replace('bookingStep', '')) || 1;
+        }
+
+        // If advancing forward, validate the current step first
+        if (stepNumber > currentStep) {
+            if (!validateBookingStep(currentStep)) {
+                return;
+            }
+        }
+
+        document.querySelectorAll('.booking-step-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.booking-steps-bar .step-item').forEach(el => el.classList.remove('active'));
+
+        const targetStep = document.getElementById('bookingStep' + stepNumber);
+        const targetIndicator = document.getElementById('step' + stepNumber + 'Indicator');
+
+        if (targetStep) targetStep.classList.add('active');
+        if (targetIndicator) targetIndicator.classList.add('active');
+    }
+
+    function submitBooking() {
+        if (!validateBookingStep(3)) {
+            return;
+        }
+
+        const email = document.getElementById('bookEmail')?.value || 'misafir@example.com';
+        const totalPrice = document.getElementById('calcTotalPrice')?.textContent || '$435';
+        const checkIn = document.getElementById('bookCheckIn')?.value;
+        const checkOut = document.getElementById('bookCheckOut')?.value;
+
+        // Hide form steps and show success screen
+        document.querySelectorAll('.booking-step-content').forEach(el => el.style.display = 'none');
+        const successScreen = document.getElementById('bookingSuccessScreen');
+        if (successScreen) {
+            document.getElementById('successCustomerEmail').textContent = email;
+            if (activeProperty) document.getElementById('successPropTitle').textContent = activeProperty.name;
+            if (checkIn && checkOut) document.getElementById('successDates').textContent = `${checkIn} ile ${checkOut} arası`;
+            document.getElementById('successPaidAmount').textContent = totalPrice;
+
+            successScreen.style.display = 'block';
+        }
+    }
+
+    const guestCounts = { adults: 0, children: 0, babies: 0, pets: 0 };
+
+    function updateGuestCount(type, delta) {
+        if (!guestCounts.hasOwnProperty(type)) return;
+
+        guestCounts[type] = Math.max(0, guestCounts[type] + delta);
+
+        const cntEl = document.getElementById('cnt' + type.charAt(0).toUpperCase() + type.slice(1));
+        if (cntEl) cntEl.textContent = guestCounts[type];
+
+        const totalGuests = guestCounts.adults + guestCounts.children;
+        const totalTxtEl = document.getElementById('totalGuestsCountTxt');
+        if (totalTxtEl) {
+            let label = totalGuests + ' Misafir';
+            if (guestCounts.babies > 0) label += `, ${guestCounts.babies} Bebek`;
+            if (guestCounts.pets > 0) label += `, ${guestCounts.pets} Evcil H.`;
+            totalTxtEl.textContent = label;
+        }
+
+        // Trigger live list filter refresh
+        fetchData();
+    }
+
+    // Public API Methods Exposed to Window
+    return {
+        fetchData: fetchData,
+        toggleTheme: toggleTheme,
+        toggleNotifications: toggleNotifications,
+        toggleUserMenu: toggleUserMenu,
+        toggleSidebarPanel: toggleSidebarPanel,
+        toggleNavFilters: toggleNavFilters,
+        toggleFavoritesDrawer: toggleFavoritesDrawer,
+        toggleFavorite: toggleFavorite,
+        toggleMapTileLayer: toggleMapTileLayer,
+        toggleMapExpand: toggleMapExpand,
+        selectPropertyById: selectPropertyById,
+        closeMapPopup: closeMapPopup,
+        openDetailModal: openDetailModal,
+        closeDetailModal: closeDetailModal,
+        openBookingModal: openBookingModal,
+        closeBookingModal: closeBookingModal,
+        calculateBookingTotal: calculateBookingTotal,
+        goToBookingStep: goToBookingStep,
+        submitBooking: submitBooking,
+        switchTab: switchTab,
+        updatePriceLabel: updatePriceLabel,
+        updateReviewsLabel: updateReviewsLabel,
+        toggleAllRoomTypes: toggleAllRoomTypes,
+        onRoomTypeChange: onRoomTypeChange,
+        clearFilters: clearFilters,
+        filterByBoroughFromExplore: filterByBoroughFromExplore,
+        openBoroughModal: openBoroughModal,
+        clearBoroughFilterModal: applyBoroughFilterFromModal,
+        clearAllFavorites: clearAllFavorites,
+        renderFavoritesPage: renderFavoritesPage,
+        renderComparePage: renderComparePage,
+        clearFieldError: clearFieldError,
+        updateGuestCount: updateGuestCount
+    };
+
+})();

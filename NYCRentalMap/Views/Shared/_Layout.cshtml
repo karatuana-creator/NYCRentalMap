@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - NYC Rental Map</title>
+    <meta name="description" content="New York City Airbnb kiralık ev haritası ve analitik paneli" />
+
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <!-- Leaflet MarkerCluster CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+
+    <!-- App CSS -->
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <!-- Top Navbar Header -->
+    <header class="app-header">
+        <div class="header-left">
+            <a class="brand-logo" asp-controller="Home" asp-action="Index">
+                <div class="logo-badge"><i class="fa-solid fa-location-dot"></i></div>
+                <span class="brand-name">NYC Rental Map</span>
+            </a>
+            <nav class="nav-menu">
+                <a class="nav-item active" href="javascript:void(0)" onclick="appUI.switchTab('home')">Ana Sayfa</a>
+                <a class="nav-item filter-toggle-nav-btn" href="javascript:void(0)" onclick="appUI.toggleSidebarPanel()">
+                    <i class="fa-solid fa-sliders"></i> Filtreler
+                </a>
+                <a class="nav-item" href="javascript:void(0)" onclick="appUI.switchTab('map')">Harita</a>
+                <a class="nav-item" href="javascript:void(0)" onclick="appUI.switchTab('explore')">Keşfet</a>
+                <a class="nav-item" href="javascript:void(0)" onclick="appUI.switchTab('statistics')">İstatistikler</a>
+                <a class="nav-item" href="javascript:void(0)" onclick="appUI.switchTab('compare')">Karşılaştır</a>
+                <a class="nav-item fav-tab" href="javascript:void(0)" onclick="appUI.switchTab('favorites')">
+                    Favorilerim <span class="fav-count-badge" id="navFavBadge">0</span>
+                </a>
+            </nav>
+        </div>
+
+        <div class="header-right">
+            <!-- Search bar -->
+            <div class="header-search">
+                <input type="text" id="topSearchInput" placeholder="Mahalle, adres veya anahtar kelime..." />
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            </div>
+
+            <!-- Theme Toggle -->
+            <button class="icon-btn theme-toggle-btn" id="themeToggleBtn" title="Karanlık/Aydınlık Tema" onclick="appUI.toggleTheme()">
+                <i class="fa-solid fa-moon" id="themeIcon"></i>
+            </button>
+
+            <!-- Notifications -->
+            <button class="icon-btn notif-btn" title="Bildirimler" onclick="appUI.toggleNotifications()">
+                <i class="fa-solid fa-bell"></i>
+                <span class="notif-badge">3</span>
+            </button>
+
+            <!-- User Profile -->
+            <div class="user-profile" onclick="appUI.toggleUserMenu()">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80" alt="Tuana Kara" class="avatar-img" />
+                <span class="user-name">Tuana Kara</span>
+                <i class="fa-solid fa-chevron-down caret-icon"></i>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main View Content -->
+    <main role="main" class="main-wrapper">
+        @RenderBody()
+    </main>
+
+    <!-- Notifications Modal Dropdown -->
+    <div class="dropdown-modal notif-modal" id="notifModal">
+        <div class="modal-header">
+            <h3>Bildirimler</h3>
+            <span class="mark-read">Tümünü Okundu İşaretle</span>
+        </div>
+        <div class="modal-list">
+            <div class="modal-item">
+                <i class="fa-solid fa-heart icon-red"></i>
+                <div class="item-info">
+                    <p><strong>Harika konumda daire</strong> favorilerinize eklendi.</p>
+                    <small>10 dakika önce</small>
+                </div>
+            </div>
+            <div class="modal-item">
+                <i class="fa-solid fa-tag icon-blue"></i>
+                <div class="item-info">
+                    <p>Manhattan bölgesinde %15 fiyat indirimi!</p>
+                    <small>1 saat önce</small>
+                </div>
+            </div>
+            <div class="modal-item">
+                <i class="fa-solid fa-star icon-yellow"></i>
+                <div class="item-info">
+                    <p>Kaydettiğiniz eve 5 yıldızlı yeni yorum yapıldı.</p>
+                    <small>3 saat önce</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Profile Dropdown -->
+    <div class="dropdown-modal user-modal" id="userModal">
+        <div class="user-card-mini">
+            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80" alt="Tuana Kara" />
+            <div>
+                <h4>Tuana Kara</h4>
+                <small>tuana.kara@example.com</small>
+            </div>
+        </div>
+        <hr />
+        <a href="javascript:void(0)" class="dropdown-link"><i class="fa-solid fa-user"></i> Profilim</a>
+        <a href="javascript:void(0)" class="dropdown-link"><i class="fa-solid fa-sliders"></i> Ayarlar</a>
+        <a href="javascript:void(0)" class="dropdown-link text-danger"><i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap</a>
+    </div>
+
+    <!-- Property Detail Full Modal Overlay -->
+    <div class="full-modal-overlay" id="detailModalOverlay" onclick="if(event.target===this) appUI.closeDetailModal()">
+        <div class="detail-modal-card">
+            <button class="modal-close-icon" onclick="appUI.closeDetailModal()"><i class="fa-solid fa-xmark"></i></button>
+            <div class="modal-gallery">
+                <img id="detailModalImg" src="" alt="Main Property Image" />
+            </div>
+            <div class="modal-content-body">
+                <div class="modal-badge-row">
+                    <span class="badge-coral" id="modalBadgeRoom">Entire home/apt</span>
+                    <span class="badge-blue" id="modalBadgeBorough">Manhattan</span>
+                </div>
+                <h2 id="modalTitle">Harika Konumda Lüks Daire</h2>
+                <p class="modal-subtitle" id="modalLocation">📍 Manhattan, New York, ABD</p>
+                <hr />
+                <div class="modal-features-grid">
+                    <div><i class="fa-solid fa-bed icon-coral"></i> <strong id="modalBeds">2 Yatak</strong></div>
+                    <div><i class="fa-solid fa-user-group icon-coral"></i> <strong id="modalGuests">4 Misafir</strong></div>
+                    <div><i class="fa-solid fa-star icon-yellow"></i> <strong id="modalRating">4.89 Puan</strong></div>
+                    <div><i class="fa-solid fa-comments icon-blue"></i> <strong id="modalReviews">120 Yorum</strong></div>
+                </div>
+                <hr />
+                <p class="modal-desc">
+                    New York'un merkezinde yer alan bu şık ve konforlu daire, unutulmaz bir konaklama deneyimi sunuyor. Şehrin tüm cazibe merkezlerine yürüme mesafesinde!
+                </p>
+                <div class="modal-bottom-bar">
+                    <div class="price-huge"><strong id="modalPrice">$120</strong> <small>/ gece</small></div>
+                    <button class="btn-primary-coral btn-lg" onclick="appUI.openBookingModal()"><i class="fa-solid fa-calendar-check"></i> Hemen Rezerve Et</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Booking / Reservation Professional Modal -->
+    <div class="full-modal-overlay" id="bookingModalOverlay" onclick="if(event.target===this) appUI.closeBookingModal()">
+        <div class="booking-modal-card">
+            <button class="modal-close-icon" onclick="appUI.closeBookingModal()"><i class="fa-solid fa-xmark"></i></button>
+
+            <!-- Booking Header -->
+            <div class="booking-header">
+                <div class="booking-header-icon"><i class="fa-solid fa-calendar-check"></i></div>
+                <div>
+                    <h2>Rezervasyon Yap</h2>
+                    <p id="bookingPropTitle">Seçilen Ev Adı</p>
+                </div>
+            </div>
+
+            <!-- Booking Progress Bar -->
+            <div class="booking-steps-bar">
+                <div class="step-item active" id="step1Indicator" onclick="appUI.goToBookingStep(1)" style="cursor:pointer;"><span>1</span> Tarih ve Misafir</div>
+                <div class="step-line"></div>
+                <div class="step-item" id="step2Indicator" onclick="appUI.goToBookingStep(2)" style="cursor:pointer;"><span>2</span> Kişisel Bilgiler</div>
+                <div class="step-line"></div>
+                <div class="step-item" id="step3Indicator" onclick="appUI.goToBookingStep(3)" style="cursor:pointer;"><span>3</span> Ödeme & Onay</div>
+            </div>
+
+            <!-- Booking Form Content -->
+            <form id="bookingForm" onsubmit="event.preventDefault(); appUI.submitBooking();">
+                <!-- Step 1: Dates & Guests -->
+                <div class="booking-step-content active" id="bookingStep1">
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-calendar-day"></i> Giriş Tarihi</label>
+                            <input type="date" id="bookCheckIn" class="custom-input-lg" required onchange="appUI.calculateBookingTotal()" />
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-calendar-day"></i> Çıkış Tarihi</label>
+                            <input type="date" id="bookCheckOut" class="custom-input-lg" required onchange="appUI.calculateBookingTotal()" />
+                        </div>
+                    </div>
+
+                    <div class="form-row-2 mt-3">
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-user-group"></i> Misafir Sayısı</label>
+                            <select id="bookGuestsCount" class="custom-select-lg" onchange="appUI.calculateBookingTotal()">
+                                <option value="1">1 Misafir</option>
+                                <option value="2" selected>2 Misafir</option>
+                                <option value="3">3 Misafir</option>
+                                <option value="4">4 Misafir</option>
+                                <option value="5">5+ Misafir</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-bed"></i> Oda Tipi Tercihi</label>
+                            <input type="text" id="bookRoomTypeReadonly" class="custom-input-lg" readonly value="Entire home/apt" />
+                        </div>
+                    </div>
+
+                    <!-- Price Summary Card -->
+                    <div class="price-calculation-card mt-3">
+                        <div class="calc-row">
+                            <span id="calcNightRate">$120 x <strong id="calcNightCount">3 gece</strong></span>
+                            <strong id="calcBasePrice">$360</strong>
+                        </div>
+                        <div class="calc-row">
+                            <span>Temizlik Ücreti</span>
+                            <strong>$45</strong>
+                        </div>
+                        <div class="calc-row">
+                            <span>Hizmet & Yazılım Ücreti</span>
+                            <strong>$30</strong>
+                        </div>
+                        <hr />
+                        <div class="calc-row total-row">
+                            <span>Toplam Tutar</span>
+                            <span class="total-amount-txt" id="calcTotalPrice">$435</span>
+                        </div>
+                    </div>
+
+                    <div class="booking-footer-btn mt-4">
+                        <button type="button" class="btn-primary-coral w-100 btn-lg" onclick="appUI.goToBookingStep(2)">Devam Et: İletişim Bilgileri <i class="fa-solid fa-arrow-right"></i></button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Personal Information -->
+                <div class="booking-step-content" id="bookingStep2">
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-user"></i> Adınız</label>
+                            <input type="text" id="bookFirstName" class="custom-input-lg" placeholder="Ahmet" required />
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-user"></i> Soyadınız</label>
+                            <input type="text" id="bookLastName" class="custom-input-lg" placeholder="Yılmaz" required />
+                        </div>
+                    </div>
+
+                    <div class="form-row-2 mt-3">
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-envelope"></i> E-Posta Adresi</label>
+                            <input type="email" id="bookEmail" class="custom-input-lg" placeholder="ornek@domain.com" required />
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-phone"></i> Telefon Numarası</label>
+                            <input type="tel" id="bookPhone" class="custom-input-lg" placeholder="+90 5XX XXX XX XX" required />
+                        </div>
+                    </div>
+
+                    <div class="form-group mt-3">
+                        <label><i class="fa-solid fa-comment-dots"></i> Ev Sahibine Özel Not (Opsiyonel)</label>
+                        <textarea id="bookNotes" class="custom-textarea" rows="3" placeholder="Varış saatiniz veya özel istekleriniz..."></textarea>
+                    </div>
+
+                    <div class="booking-btn-row mt-4">
+                        <button type="button" class="btn-outline-dark btn-lg" onclick="appUI.goToBookingStep(1)"><i class="fa-solid fa-arrow-left"></i> Geri</button>
+                        <button type="button" class="btn-primary-coral btn-lg flex-1" onclick="appUI.goToBookingStep(3)">Ödeme Adımına Geç <i class="fa-solid fa-arrow-right"></i></button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Payment & Confirmation -->
+                <div class="booking-step-content" id="bookingStep3">
+                    <div class="payment-card-box">
+                        <div class="payment-card-header">
+                            <span><i class="fa-solid fa-credit-card"></i> Kredi veya Banka Kartı</span>
+                            <div class="card-icons">
+                                <i class="fa-brands fa-cc-visa"></i>
+                                <i class="fa-brands fa-cc-mastercard"></i>
+                            </div>
+                        </div>
+
+                        <div class="form-group mt-3">
+                            <label>Kart Üzerindeki İsim</label>
+                            <input type="text" id="cardHolder" class="custom-input-lg" placeholder="AHMET YILMAZ" required oninput="appUI.clearFieldError('cardHolder')" />
+                        </div>
+
+                        <div class="form-group mt-3">
+                            <label>Kart Numarası</label>
+                            <input type="text" id="cardNumber" class="custom-input-lg" placeholder="4543 •••• •••• 8890" maxlength="19" required oninput="appUI.clearFieldError('cardNumber')" />
+                        </div>
+
+                        <div class="form-row-2 mt-3">
+                            <div class="form-group">
+                                <label>Son Kullanma Tarihi</label>
+                                <input type="text" id="cardExpiry" class="custom-input-lg" placeholder="MM/YY" maxlength="5" required oninput="appUI.clearFieldError('cardExpiry')" />
+                            </div>
+                            <div class="form-group">
+                                <label>CVC / CVV</label>
+                                <input type="text" id="cardCvc" class="custom-input-lg" placeholder="•••" maxlength="4" required oninput="appUI.clearFieldError('cardCvc')" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="security-badge-box mt-3">
+                        <i class="fa-solid fa-shield-halved icon-green"></i>
+                        <span>256-Bit SSL Güvenli Şifreleme ile ödemeniz koruma altındadır.</span>
+                    </div>
+
+                    <div class="booking-btn-row mt-4">
+                        <button type="button" class="btn-outline-dark btn-lg" onclick="appUI.goToBookingStep(2)"><i class="fa-solid fa-arrow-left"></i> Geri</button>
+                        <button type="submit" class="btn-success-green btn-lg flex-1" id="btnConfirmBooking"><i class="fa-solid fa-lock"></i> Rezervasyonu Onayla ve Öde (<span id="btnPayAmount">$435</span>)</button>
+                    </div>
+                </div>
+
+                <!-- Success Screen State -->
+                <div class="booking-step-content text-center py-4" id="bookingSuccessScreen" style="display:none;">
+                    <div class="success-icon-wrap">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                    <h2 class="mt-3" style="color:var(--text-color); font-weight:800;">Rezervasyonunuz Başarıyla Alındı!</h2>
+                    <p class="text-muted mt-2" style="font-size:0.95rem; max-width:480px; margin:0 auto;">
+                        Rezervasyon onayınız ve detaylar <strong id="successCustomerEmail">ornek@domain.com</strong> adresine e-posta olarak gönderilmiştir.
+                    </p>
+
+                    <div class="booking-confirmation-ticket mt-4">
+                        <div class="ticket-row"><span>Rezervasyon Kodu:</span> <strong>#NYC-984210</strong></div>
+                        <div class="ticket-row"><span>Konaklama:</span> <strong id="successPropTitle">Lüks Manhattan Dairesi</strong></div>
+                        <div class="ticket-row"><span>Giriş - Çıkış:</span> <strong id="successDates">15 Ağu 2026 - 18 Ağu 2026</strong></div>
+                        <div class="ticket-row"><span>Toplam Ödenen:</span> <strong class="text-coral" id="successPaidAmount">$435</strong></div>
+                    </div>
+
+                    <button type="button" class="btn-primary-coral btn-lg mt-4 px-5" onclick="appUI.closeBookingModal()"><i class="fa-solid fa-check"></i> Harika, Tamamdır</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Leaflet MarkerCluster JS -->
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- App JS -->
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
