@@ -2828,14 +2828,80 @@ body {
     color: var(--text-muted);
 }
 
+
 /* ===========================
-   AI NAVBAR DROPDOWN
+   AI NAV PILL & DROPDOWN
    =========================== */
-
-
 
 .ai-nav-dropdown-wrap {
     position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* Premium gradient pill button */
+.ai-nav-pill {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.38rem 0.85rem 0.38rem 0.7rem;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+    box-shadow: 0 4px 14px rgba(99,102,241,0.4);
+    white-space: nowrap;
+    letter-spacing: 0.1px;
+}
+
+.ai-nav-pill:hover {
+    transform: translateY(-1px) scale(1.03);
+    box-shadow: 0 8px 22px rgba(99,102,241,0.55);
+}
+
+.ai-nav-pill.active {
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.35), 0 8px 22px rgba(99,102,241,0.4);
+}
+
+/* Shimmer sweep animation */
+.ai-pill-glow {
+    position: absolute;
+    top: 0; left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+    animation: pillShimmer 2.5s infinite;
+}
+
+@keyframes pillShimmer {
+    0%   { left: -100%; }
+    50%  { left: 150%; }
+    100% { left: 150%; }
+}
+
+.ai-pill-icon {
+    font-size: 0.85rem;
+    position: relative;
+}
+
+.ai-pill-label {
+    position: relative;
+}
+
+.ai-pill-badge {
+    position: relative;
+    background: rgba(255,255,255,0.25);
+    border-radius: 6px;
+    font-size: 0.58rem;
+    font-weight: 800;
+    padding: 1px 5px;
+    letter-spacing: 0.5px;
 }
 
 .ai-dropdown-panel {

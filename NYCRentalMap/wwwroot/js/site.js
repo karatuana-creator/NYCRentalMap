@@ -1289,16 +1289,10 @@ const appUI = (function () {
             });
 
             document.querySelectorAll('.nav-item').forEach(el => {
-                if (!el.classList.contains('filter-toggle-nav-btn') && !el.getAttribute('onclick')?.includes('map') && !el.classList.contains('ai-nav-item')) {
+                if (!el.classList.contains('filter-toggle-nav-btn') && !el.getAttribute('onclick')?.includes('map')) {
                     el.classList.remove('active');
                 }
             });
-
-            const panel = document.getElementById('aiDropdownPanel');
-            const aiNavLink = document.querySelector('.ai-nav-item');
-            if (aiNavLink && panel && !panel.classList.contains('open')) {
-                aiNavLink.classList.remove('active');
-            }
 
             const currentLink = document.querySelector(`.nav-item[onclick*="${activeTab}"]`);
             if (currentLink) currentLink.classList.add('active');
@@ -1979,24 +1973,18 @@ const appUI = (function () {
     function toggleAiDropdown(e) {
         if (e) e.stopPropagation();
         const panel = document.getElementById('aiDropdownPanel');
-        const navLink = document.querySelector('.ai-nav-item');
+        const pill  = document.getElementById('aiNavPill');
         if (!panel) return;
         const isOpen = panel.classList.toggle('open');
-        // Dynamically position panel below the nav link
-        if (navLink) {
-            const rect = navLink.getBoundingClientRect();
-            panel.style.top  = (rect.bottom + 8) + 'px';
+        // Dynamically position panel below the pill button
+        if (pill) {
+            const rect = pill.getBoundingClientRect();
+            panel.style.top   = (rect.bottom + 8) + 'px';
             panel.style.right = (window.innerWidth - rect.right) + 'px';
             panel.style.left  = 'auto';
-        }
-        // Set active underline on AI nav link
-        if (navLink) {
-            if (isOpen) {
-                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-                navLink.classList.add('active');
-            } else {
-                navLink.classList.remove('active');
-            }
+            // Toggle active ring on pill
+            if (isOpen) pill.classList.add('active');
+            else        pill.classList.remove('active');
         }
     }
 
@@ -2047,12 +2035,12 @@ const appUI = (function () {
 
     // Close dropdown when clicking outside
     document.addEventListener('click', function(e) {
-        const wrap = document.getElementById('aiNavWrap');
+        const wrap  = document.getElementById('aiNavWrap');
         const panel = document.getElementById('aiDropdownPanel');
-        const navLink = document.querySelector('.ai-nav-item');
-        if (wrap && panel && panel.classList.contains('open') && !wrap.contains(e.target)) {
+        const pill  = document.getElementById('aiNavPill');
+        if (wrap && panel && panel.classList.contains('open') && !wrap.contains(e.target) && !panel.contains(e.target)) {
             panel.classList.remove('open');
-            if (navLink) navLink.classList.remove('active');
+            if (pill) pill.classList.remove('active');
         }
     });
 
