@@ -48,81 +48,6 @@
                     <a class="nav-item ai-nav-item" href="javascript:void(0)" onclick="appUI.toggleAiDropdown(event)" style="font-weight:700; color:#8b5cf6;">
                         <i class="fa-solid fa-sparkles" style="color:#8b5cf6;"></i> AI Asistan
                     </a>
-                    <!-- AI Dropdown Panel -->
-                    <div class="ai-dropdown-panel" id="aiDropdownPanel">
-                        <div class="ai-panel-header">
-                            <div class="ai-header-left">
-                                <div class="ai-logo-badge" style="width:38px;height:38px;font-size:1rem;">
-                                    <i class="fa-solid fa-brain"></i>
-                                    <span class="ai-live-dot"></span>
-                                </div>
-                                <div>
-                                    <h2 class="ai-panel-title" style="font-size:0.95rem;">NYC Rental AI</h2>
-                                    <p class="ai-panel-sub">Akıllı Veri Analisti · <span class="ai-online-txt">● Çevrimiçi</span></p>
-                                </div>
-                            </div>
-                            <button type="button" class="ai-close-btn" onclick="appUI.toggleAiDropdown(event)">
-                                <i class="fa-solid fa-xmark"></i>
-                            </button>
-                        </div>
-
-                        <div class="ai-welcome-area" id="aiDropWelcome">
-                            <p class="ai-welcome-desc" style="margin-bottom:0.9rem;">48.895 NYC kiralama verisi üzerinden canlı analiz yapın:</p>
-                            <div class="ai-question-grid">
-                                <button class="ai-q-card" onclick="appUI.sendAiDropPrompt('Brooklyn\'de ortalamanın altında fiyatlı evleri göster.')">
-                                    <div class="ai-q-card-icon" style="background:linear-gradient(135deg,#f59e0b,#f97316);">💡</div>
-                                    <div class="ai-q-card-body">
-                                        <span class="ai-q-card-title">Brooklyn · Uygun Fiyatlar</span>
-                                        <span class="ai-q-card-desc">Ort. $124 altındaki evleri filtrele</span>
-                                    </div>
-                                    <i class="fa-solid fa-chevron-right ai-q-card-arrow"></i>
-                                </button>
-                                <button class="ai-q-card" onclick="appUI.sendAiDropPrompt('Yatırım için en uygun mahalle hangisi?')">
-                                    <div class="ai-q-card-icon" style="background:linear-gradient(135deg,#10b981,#059669);">📈</div>
-                                    <div class="ai-q-card-body">
-                                        <span class="ai-q-card-title">Yatırım Analizi</span>
-                                        <span class="ai-q-card-desc">En yüksek getirili Top 3 mahalle</span>
-                                    </div>
-                                    <i class="fa-solid fa-chevron-right ai-q-card-arrow"></i>
-                                </button>
-                                <button class="ai-q-card" onclick="appUI.sendAiDropPrompt('Manhattan\'da en yüksek puanlı evleri listele.')">
-                                    <div class="ai-q-card-icon" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);">⭐</div>
-                                    <div class="ai-q-card-body">
-                                        <span class="ai-q-card-title">Manhattan · En Yüksek Puan</span>
-                                        <span class="ai-q-card-desc">4.80+ müşteri memnuniyetli evler</span>
-                                    </div>
-                                    <i class="fa-solid fa-chevron-right ai-q-card-arrow"></i>
-                                </button>
-                                <button class="ai-q-card" onclick="appUI.sendAiDropPrompt('100$ altı gecelik konaklama yerleri.')">
-                                    <div class="ai-q-card-icon" style="background:linear-gradient(135deg,#ec4899,#be185d);">💰</div>
-                                    <div class="ai-q-card-body">
-                                        <span class="ai-q-card-title">Bütçe Dostu · $100 Altı</span>
-                                        <span class="ai-q-card-desc">Tüm NYC'de gecelik $100'dan ucuz</span>
-                                    </div>
-                                    <i class="fa-solid fa-chevron-right ai-q-card-arrow"></i>
-                                </button>
-                                <button class="ai-q-card" onclick="appUI.sendAiDropPrompt('NYC genel istatistiklerini göster.')">
-                                    <div class="ai-q-card-icon" style="background:linear-gradient(135deg,#0ea5e9,#0284c7);">🏙️</div>
-                                    <div class="ai-q-card-body">
-                                        <span class="ai-q-card-title">NYC Genel Özet</span>
-                                        <span class="ai-q-card-desc">Tüm piyasa istatistikleri &amp; ortalamalar</span>
-                                    </div>
-                                    <i class="fa-solid fa-chevron-right ai-q-card-arrow"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Answer area -->
-                        <div class="ai-chat-area" id="aiDropChatBody" style="display:none;"></div>
-
-                        <!-- Footer -->
-                        <div class="ai-panel-footer" id="aiDropFooter" style="display:none;">
-                            <button class="ai-back-btn" onclick="appUI.resetAiDropdown()">
-                                <i class="fa-solid fa-arrow-left"></i> Başka soru seç
-                            </button>
-                            <span class="ai-footer-note">48.895 aktif ilan · Canlı</span>
-                        </div>
-                    </div>
                 </div>
             </nav>
         </div>
@@ -588,13 +513,84 @@
                     <label class="filter-label">E-posta Adresi</label>
                     <input type="email" id="profileInputEmail" class="custom-input-lg" value="tuana.kara@example.com" required />
                 </div>
-                <button type="submit" class="btn-primary-coral w-100 btn-lg" style="padding:0.85rem; font-weight:800; font-size:1rem;"><i class="fa-solid fa-floppy-disk"></i> Değişiklikleri Kaydet</button>
+                                <button type="submit" class="btn-primary-coral w-100 btn-lg" style="padding:0.85rem; font-weight:800; font-size:1rem;"><i class="fa-solid fa-floppy-disk"></i> Değişiklikleri Kaydet</button>
             </form>
         </div>
     </div>
 
+    <!-- AI Navbar Dropdown Panel (body level, positioned via JS) -->
+    <div class="ai-dropdown-panel" id="aiDropdownPanel">
+        <div class="ai-panel-header">
+            <div class="ai-header-left">
+                <div class="ai-logo-badge" style="width:38px;height:38px;font-size:1rem;">
+                    <i class="fa-solid fa-brain"></i>
+                    <span class="ai-live-dot"></span>
+                </div>
+                <div>
+                    <h2 class="ai-panel-title" style="font-size:0.95rem;">NYC Rental AI</h2>
+                    <p class="ai-panel-sub">Akıllı Veri Analisti · <span class="ai-online-txt">● Çevrimiçi</span></p>
+                </div>
+            </div>
+            <button type="button" class="ai-close-btn" onclick="appUI.toggleAiDropdown(event)">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ai-welcome-area" id="aiDropWelcome">
+            <p class="ai-welcome-desc" style="margin-bottom:0.9rem;">48.895 NYC kiralama verisi üzerinden canlı analiz yapın:</p>
+            <div class="ai-question-grid">
+                <button class="ai-q-card" onclick="appUI.sendAiDropPrompt('Brooklyn\'de ortalamanın altında fiyatlı evleri göster.')">
+                    <div class="ai-q-card-icon" style="background:linear-gradient(135deg,#f59e0b,#f97316);">💡</div>
+                    <div class="ai-q-card-body">
+                        <span class="ai-q-card-title">Brooklyn · Uygun Fiyatlar</span>
+                        <span class="ai-q-card-desc">Ort. $124 altındaki evleri filtrele</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right ai-q-card-arrow"></i>
+                </button>
+                <button class="ai-q-card" onclick="appUI.sendAiDropPrompt('Yatırım için en uygun mahalle hangisi?')">
+                    <div class="ai-q-card-icon" style="background:linear-gradient(135deg,#10b981,#059669);">📈</div>
+                    <div class="ai-q-card-body">
+                        <span class="ai-q-card-title">Yatırım Analizi</span>
+                        <span class="ai-q-card-desc">En yüksek getirili Top 3 mahalle</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right ai-q-card-arrow"></i>
+                </button>
+                <button class="ai-q-card" onclick="appUI.sendAiDropPrompt('Manhattan\'da en yüksek puanlı evleri listele.')">
+                    <div class="ai-q-card-icon" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);">⭐</div>
+                    <div class="ai-q-card-body">
+                        <span class="ai-q-card-title">Manhattan · En Yüksek Puan</span>
+                        <span class="ai-q-card-desc">4.80+ müşteri memnuniyetli evler</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right ai-q-card-arrow"></i>
+                </button>
+                <button class="ai-q-card" onclick="appUI.sendAiDropPrompt('100$ altı gecelik konaklama yerleri.')">
+                    <div class="ai-q-card-icon" style="background:linear-gradient(135deg,#ec4899,#be185d);">💰</div>
+                    <div class="ai-q-card-body">
+                        <span class="ai-q-card-title">Bütçe Dostu · $100 Altı</span>
+                        <span class="ai-q-card-desc">Tüm NYC'de gecelik $100'dan ucuz</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right ai-q-card-arrow"></i>
+                </button>
+                <button class="ai-q-card" onclick="appUI.sendAiDropPrompt('NYC genel istatistiklerini göster.')">
+                    <div class="ai-q-card-icon" style="background:linear-gradient(135deg,#0ea5e9,#0284c7);">🏙️</div>
+                    <div class="ai-q-card-body">
+                        <span class="ai-q-card-title">NYC Genel Özet</span>
+                        <span class="ai-q-card-desc">Tüm piyasa istatistikleri &amp; ortalamalar</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right ai-q-card-arrow"></i>
+                </button>
+            </div>
+        </div>
+        <div class="ai-chat-area" id="aiDropChatBody" style="display:none;"></div>
+        <div class="ai-panel-footer" id="aiDropFooter" style="display:none;">
+            <button class="ai-back-btn" onclick="appUI.resetAiDropdown()">
+                <i class="fa-solid fa-arrow-left"></i> Başka soru seç
+            </button>
+            <span class="ai-footer-note">48.895 aktif ilan · Canlı</span>
+        </div>
+    </div>
+
     <!-- Floating AI Assistant FAB -->
-    <button type="button" class="ai-fab-btn" onclick="appUI.openAiModal()" title="AI Akıllı Asistan & Veri Analisti">
+    <button type="button" class="ai-fab-btn" onclick="appUI.openAiModal()" title="AI Akıllı Asistan &amp; Veri Analisti">
         <div class="ai-fab-icon"><i class="fa-solid fa-sparkles"></i></div>
         <span class="ai-fab-label">AI Asistan</span>
     </button>

@@ -2832,14 +2832,14 @@ body {
    AI NAVBAR DROPDOWN
    =========================== */
 
+
+
 .ai-nav-dropdown-wrap {
     position: relative;
 }
 
 .ai-dropdown-panel {
-    position: absolute;
-    top: calc(100% + 12px);
-    right: 0;
+    position: fixed;
     width: 380px;
     max-height: 0;
     overflow: hidden;

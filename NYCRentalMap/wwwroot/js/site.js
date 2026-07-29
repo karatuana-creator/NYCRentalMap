@@ -1982,6 +1982,13 @@ const appUI = (function () {
         const navLink = document.querySelector('.ai-nav-item');
         if (!panel) return;
         const isOpen = panel.classList.toggle('open');
+        // Dynamically position panel below the nav link
+        if (navLink) {
+            const rect = navLink.getBoundingClientRect();
+            panel.style.top  = (rect.bottom + 8) + 'px';
+            panel.style.right = (window.innerWidth - rect.right) + 'px';
+            panel.style.left  = 'auto';
+        }
         // Set active underline on AI nav link
         if (navLink) {
             if (isOpen) {
