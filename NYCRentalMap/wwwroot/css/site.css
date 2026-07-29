@@ -3,21 +3,21 @@
    ========================================================================== */
 
 :root {
-    /* Color Palette (Light Mode - Matching Reference Image) */
-    --bg-main: #f4f6fa;
-    --bg-card: #ffffff;
-    --bg-header: #ffffff;
-    --bg-input: #f0f3f8;
-    --bg-hover: #eaf0f8;
-    --border-color: #e5e9f0;
+    /* Color Palette (Warm Soft Beige & Cream Light Theme) */
+    --bg-main: #F7F3EE;
+    --bg-card: #FFFFFF;
+    --bg-header: #FFFFFF;
+    --bg-input: #F3ECE4;
+    --bg-hover: #EFE4D8;
+    --border-color: #E6CCB2;
     
-    --text-main: #1e293b;
-    --text-muted: #64748b;
-    --text-light: #94a3b8;
+    --text-main: #2D2319;
+    --text-muted: #736354;
+    --text-light: #A39181;
     
-    --accent-red: #eb5757;
-    --accent-red-hover: #d94343;
-    --accent-red-light: rgba(235, 87, 87, 0.1);
+    --accent-red: #C69B7B;
+    --accent-red-hover: #B88B68;
+    --accent-red-light: rgba(198, 155, 123, 0.15);
     
     --accent-blue: #3b82f6;
     --accent-green: #10b981;
