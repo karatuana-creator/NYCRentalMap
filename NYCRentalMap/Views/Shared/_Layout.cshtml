@@ -65,10 +65,14 @@
                 <span class="notif-badge">3</span>
             </button>
 
-            <!-- User Profile -->
-            <div class="user-profile" onclick="appUI.toggleUserMenu()">
-                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80" alt="Tuana Kara" class="avatar-img" />
-                <span class="user-name">Tuana Kara</span>
+            <!-- User Profile Pill Button (Airbnb / Pro Style) -->
+            <div class="user-profile-pill" id="userProfileBtn" onclick="appUI.toggleUserMenu()" title="Hesap ve Üyelik Menüsü">
+                <i class="fa-solid fa-bars menu-hamburger-icon"></i>
+                <div class="user-avatar-wrap">
+                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80" alt="Tuana Kara" class="avatar-img" id="userHeaderAvatar" />
+                    <span class="user-status-dot" id="userStatusDot"></span>
+                </div>
+                <span class="user-name" id="userHeaderName">Tuana Kara</span>
                 <i class="fa-solid fa-chevron-down caret-icon"></i>
             </div>
         </div>
@@ -110,19 +114,47 @@
         </div>
     </div>
 
-    <!-- User Profile Dropdown -->
-    <div class="dropdown-modal user-modal" id="userModal">
-        <div class="user-card-mini">
-            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80" alt="Tuana Kara" />
-            <div>
-                <h4>Tuana Kara</h4>
-                <small>tuana.kara@example.com</small>
+    <!-- User Profile & Auth Dropdown Modal -->
+    <div class="dropdown-modal user-modal-pro" id="userModal">
+        <!-- User Info Header (Logged In) -->
+        <div class="user-modal-header" id="userModalLoggedInHeader">
+            <div class="user-card-pro">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80" alt="Tuana Kara" id="userModalAvatar" />
+                <div class="user-card-info">
+                    <h4 id="userModalName">Tuana Kara</h4>
+                    <small id="userModalEmail">tuana.kara@example.com</small>
+                    <span class="badge-pro-user"><i class="fa-solid fa-shield-halved"></i> Doğrulanmış Profil</span>
+                </div>
             </div>
         </div>
-        <hr />
-        <a href="javascript:void(0)" class="dropdown-link"><i class="fa-solid fa-user"></i> Profilim</a>
-        <a href="javascript:void(0)" class="dropdown-link"><i class="fa-solid fa-sliders"></i> Ayarlar</a>
-        <a href="javascript:void(0)" class="dropdown-link text-danger"><i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap</a>
+
+        <!-- Auth Actions Box (When Logged Out) -->
+        <div class="user-auth-action-box" id="userModalAuthActions" style="display:none;">
+            <div style="font-weight:700; font-size:0.9rem; color:var(--text-main); margin-bottom:0.4rem;">Hoş Geldiniz!</div>
+            <p style="font-size:0.78rem; color:var(--text-muted); margin-bottom:0.85rem;">NYCRentalMap ile evleri favorileyin, karşılaştırın ve rezervasyon yapın.</p>
+            <button type="button" class="btn-primary-coral w-100 mb-2" onclick="appUI.openLoginModal()"><i class="fa-solid fa-right-to-bracket"></i> Giriş Yap</button>
+            <button type="button" class="btn-outline-dark w-100" onclick="appUI.openRegisterModal()"><i class="fa-solid fa-user-plus"></i> Hesap Aç / Kaydol</button>
+        </div>
+
+        <div class="menu-divider"></div>
+
+        <!-- Quick Links List -->
+        <div class="user-menu-links">
+            <a href="javascript:void(0)" class="dropdown-link-pro" onclick="appUI.openProfileModal()"><i class="fa-solid fa-id-card icon-blue"></i> <span>Hesabım & Profilim</span></a>
+            <a href="javascript:void(0)" class="dropdown-link-pro" onclick="appUI.openLoginModal()"><i class="fa-solid fa-right-to-bracket icon-coral"></i> <span>Giriş Yap / Oturum Aç</span></a>
+            <a href="javascript:void(0)" class="dropdown-link-pro" onclick="appUI.openRegisterModal()"><i class="fa-solid fa-user-plus icon-mint"></i> <span>Yeni Hesap Aç / Kaydol</span></a>
+            <a href="javascript:void(0)" class="dropdown-link-pro" onclick="appUI.switchTab('favorites'); appUI.toggleUserMenu();"><i class="fa-solid fa-heart icon-red"></i> <span>Beğendiğim Evler</span> <span class="fav-menu-badge" id="menuFavBadge">0</span></a>
+            <a href="javascript:void(0)" class="dropdown-link-pro" onclick="appUI.switchTab('compare'); appUI.toggleUserMenu();"><i class="fa-solid fa-code-compare icon-purple"></i> <span>Karşılaştırma Listesi</span></a>
+            <a href="javascript:void(0)" class="dropdown-link-pro" onclick="appUI.openHostModal()"><i class="fa-solid fa-house-chimney-user icon-green"></i> <span>Ev Sahibi Ol & İlan Ver</span></a>
+        </div>
+
+        <div class="menu-divider"></div>
+
+        <!-- Footer Links -->
+        <div class="user-menu-footer">
+            <a href="javascript:void(0)" class="dropdown-link-pro" onclick="appUI.toggleTheme()"><i class="fa-solid fa-moon"></i> <span>Aydınlık / Karanlık Tema</span></a>
+            <a href="javascript:void(0)" class="dropdown-link-pro text-danger" id="btnLogoutBtn" onclick="appUI.logoutUser()"><i class="fa-solid fa-right-from-bracket"></i> <span>Çıkış Yap</span></a>
+        </div>
     </div>
 
     <!-- Property Detail Full Modal Overlay -->
@@ -337,6 +369,146 @@
 
                     <button type="button" class="btn-primary-coral btn-lg mt-4 px-5" onclick="appUI.closeBookingModal()"><i class="fa-solid fa-check"></i> Harika, Tamamdır</button>
                 </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Login Modal Overlay -->
+    <div class="full-modal-overlay" id="loginModalOverlay" onclick="if(event.target===this) appUI.closeLoginModal()">
+        <div class="auth-modal-card">
+            <button class="modal-close-icon" onclick="appUI.closeLoginModal()"><i class="fa-solid fa-xmark"></i></button>
+            <div class="auth-header text-center mb-4">
+                <div class="auth-icon-badge"><i class="fa-solid fa-right-to-bracket"></i></div>
+                <h2>Giriş Yap</h2>
+                <p>NYCRentalMap hesabınıza erişin ve favorilerinizi yönetin</p>
+            </div>
+            <form onsubmit="event.preventDefault(); appUI.submitLogin();">
+                <div class="form-group mb-3">
+                    <label class="filter-label">E-posta Adresi veya Kullanıcı Adı</label>
+                    <div class="input-icon-wrap">
+                        <i class="fa-solid fa-envelope"></i>
+                        <input type="email" id="loginEmail" class="custom-input-lg" placeholder="ornek@domain.com" required value="tuana.kara@example.com" />
+                    </div>
+                </div>
+                <div class="form-group mb-3">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <label class="filter-label">Şifre</label>
+                        <a href="javascript:void(0)" onclick="alert('Şifre sıfırlama bağlantısı e-posta adresinize gönderildi!')" style="font-size:0.75rem; color:var(--accent-red); text-decoration:none; font-weight:600;">Şifremi Unuttum?</a>
+                    </div>
+                    <div class="input-icon-wrap">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" id="loginPassword" class="custom-input-lg" placeholder="••••••••" required value="123456" />
+                    </div>
+                </div>
+                <div class="form-group mb-4" style="display:flex; align-items:center; gap:0.5rem;">
+                    <input type="checkbox" id="chkRememberMe" checked />
+                    <label for="chkRememberMe" style="font-size:0.8rem; color:var(--text-muted); cursor:pointer;">Beni Hatırla</label>
+                </div>
+                <button type="submit" class="btn-primary-coral w-100 btn-lg mb-3" style="padding:0.85rem; font-weight:800; font-size:1rem;"><i class="fa-solid fa-right-to-bracket"></i> Oturum Aç</button>
+                
+                <div class="auth-divider mb-3"><span>veya hızlı giriş yapın</span></div>
+                
+                <div class="social-login-grid mb-3">
+                    <button type="button" class="btn-social-login" onclick="appUI.quickSocialLogin('Google')"><i class="fa-brands fa-google" style="color:#ea4335;"></i> Google</button>
+                    <button type="button" class="btn-social-login" onclick="appUI.quickSocialLogin('Apple')"><i class="fa-brands fa-apple"></i> Apple</button>
+                </div>
+                
+                <div class="auth-footer text-center">
+                    <span style="color:var(--text-muted); font-size:0.85rem;">Hesabınız yok mu?</span>
+                    <a href="javascript:void(0)" onclick="appUI.closeLoginModal(); appUI.openRegisterModal();" style="color:var(--accent-red); font-weight:700; text-decoration:none; margin-left:4px;">Hemen Kaydolun</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Register Modal Overlay -->
+    <div class="full-modal-overlay" id="registerModalOverlay" onclick="if(event.target===this) appUI.closeRegisterModal()">
+        <div class="auth-modal-card">
+            <button class="modal-close-icon" onclick="appUI.closeRegisterModal()"><i class="fa-solid fa-xmark"></i></button>
+            <div class="auth-header text-center mb-4">
+                <div class="auth-icon-badge" style="background:rgba(16,185,129,0.12); color:#10b981;"><i class="fa-solid fa-user-plus"></i></div>
+                <h2>Yeni Hesap Oluştur</h2>
+                <p>Ücretsiz üye olun, binlerce evi keşfedin ve rezervasyon yapın</p>
+            </div>
+            <form onsubmit="event.preventDefault(); appUI.submitRegister();">
+                <div class="form-group mb-3">
+                    <label class="filter-label">Adınız ve Soyadınız</label>
+                    <div class="input-icon-wrap">
+                        <i class="fa-solid fa-user"></i>
+                        <input type="text" id="regFullName" class="custom-input-lg" placeholder="Örn: Tuana Kara" required />
+                    </div>
+                </div>
+                <div class="form-group mb-3">
+                    <label class="filter-label">E-posta Adresi</label>
+                    <div class="input-icon-wrap">
+                        <i class="fa-solid fa-envelope"></i>
+                        <input type="email" id="regEmail" class="custom-input-lg" placeholder="ornek@domain.com" required />
+                    </div>
+                </div>
+                <div class="form-group mb-3">
+                    <label class="filter-label">Şifre Oluşturun</label>
+                    <div class="input-icon-wrap">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" id="regPassword" class="custom-input-lg" placeholder="En az 6 karakter" minlength="6" required />
+                    </div>
+                </div>
+                <div class="form-group mb-4" style="display:flex; align-items:center; gap:0.5rem;">
+                    <input type="checkbox" id="chkTerms" required checked />
+                    <label for="chkTerms" style="font-size:0.78rem; color:var(--text-muted); cursor:pointer;">
+                        <a href="javascript:void(0)" style="color:var(--accent-red);">Kullanım Şartları</a> ve <a href="javascript:void(0)" style="color:var(--accent-red);">Gizlilik Politikası</a>'nı kabul ediyorum.
+                    </label>
+                </div>
+                <button type="submit" class="btn-primary-coral w-100 btn-lg mb-3" style="padding:0.85rem; font-weight:800; font-size:1rem; background:#10b981; border-color:#10b981;"><i class="fa-solid fa-user-check"></i> Hesabı Oluştur ve Giriş Yap</button>
+                
+                <div class="auth-footer text-center">
+                    <span style="color:var(--text-muted); font-size:0.85rem;">Zaten hesabınız var mı?</span>
+                    <a href="javascript:void(0)" onclick="appUI.closeRegisterModal(); appUI.openLoginModal();" style="color:var(--accent-red); font-weight:700; text-decoration:none; margin-left:4px;">Giriş Yapın</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Profile Modal Overlay -->
+    <div class="full-modal-overlay" id="profileModalOverlay" onclick="if(event.target===this) appUI.closeProfileModal()">
+        <div class="auth-modal-card" style="max-width:520px;">
+            <button class="modal-close-icon" onclick="appUI.closeProfileModal()"><i class="fa-solid fa-xmark"></i></button>
+            <div class="profile-modal-header text-center mb-4">
+                <div class="profile-avatar-large-wrap" style="position:relative; width:90px; height:90px; margin:0 auto 0.75rem auto;">
+                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80" alt="Tuana Kara" id="profileLargeAvatar" style="width:100%; height:100%; object-fit:cover; border-radius:50%; border:3px solid var(--accent-red);" />
+                    <button class="btn-change-avatar-icon" title="Profil Fotoğrafını Değiştir" style="position:absolute; bottom:0; right:0; background:var(--accent-red); color:#fff; border:none; border-radius:50%; width:28px; height:28px; font-size:0.75rem; cursor:pointer;"><i class="fa-solid fa-camera"></i></button>
+                </div>
+                <h3 id="profileFullName" style="font-size:1.4rem; font-weight:800; margin:0.4rem 0 0.2rem 0; color:var(--text-main);">Tuana Kara</h3>
+                <span style="color:var(--text-muted); font-size:0.85rem;" id="profileEmailTxt">tuana.kara@example.com</span>
+                <div style="margin-top:0.5rem;"><span class="badge-pro-user"><i class="fa-solid fa-shield-halved"></i> Doğrulanmış Profil</span></div>
+            </div>
+
+            <div style="background:var(--bg-body); border:1px solid var(--border-color); border-radius:14px; padding:1.25rem; margin-bottom:1.5rem;">
+                <div style="display:grid; grid-template-columns:repeat(3, 1fr); text-align:center; gap:0.5rem;">
+                    <div>
+                        <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Favori Evler</span>
+                        <strong style="font-size:1.2rem; font-weight:800; color:var(--accent-red);" id="profileFavCount">0</strong>
+                    </div>
+                    <div style="border-left:1px solid var(--border-color); border-right:1px solid var(--border-color);">
+                        <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Rezervasyonlar</span>
+                        <strong style="font-size:1.2rem; font-weight:800; color:#3b82f6;">1</strong>
+                    </div>
+                    <div>
+                        <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Üyelik Tarihi</span>
+                        <strong style="font-size:1.2rem; font-weight:800; color:#10b981;">Temmuz 2026</strong>
+                    </div>
+                </div>
+            </div>
+
+            <form onsubmit="event.preventDefault(); appUI.saveProfileChanges();">
+                <div class="form-group mb-3">
+                    <label class="filter-label">Adınız Soyadınız</label>
+                    <input type="text" id="profileInputName" class="custom-input-lg" value="Tuana Kara" required />
+                </div>
+                <div class="form-group mb-4">
+                    <label class="filter-label">E-posta Adresi</label>
+                    <input type="email" id="profileInputEmail" class="custom-input-lg" value="tuana.kara@example.com" required />
+                </div>
+                <button type="submit" class="btn-primary-coral w-100 btn-lg" style="padding:0.85rem; font-weight:800; font-size:1rem;"><i class="fa-solid fa-floppy-disk"></i> Değişiklikleri Kaydet</button>
             </form>
         </div>
     </div>

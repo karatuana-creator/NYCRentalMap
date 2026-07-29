@@ -1746,6 +1746,151 @@ const appUI = (function () {
         fetchData();
     }
 
+    // ── Auth & Profile Modal Handlers ──
+    let currentUserState = {
+        isLoggedIn: true,
+        name: 'Tuana Kara',
+        email: 'tuana.kara@example.com',
+        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80'
+    };
+
+    function updateHeaderUserUI() {
+        const headerName = document.getElementById('userHeaderName');
+        const headerAvatar = document.getElementById('userHeaderAvatar');
+        const statusDot = document.getElementById('userStatusDot');
+
+        const loggedInHeader = document.getElementById('userModalLoggedInHeader');
+        const authActions = document.getElementById('userModalAuthActions');
+        const logoutBtn = document.getElementById('btnLogoutBtn');
+
+        const modalName = document.getElementById('userModalName');
+        const modalEmail = document.getElementById('userModalEmail');
+        const modalAvatar = document.getElementById('userModalAvatar');
+
+        if (currentUserState.isLoggedIn) {
+            if (headerName) headerName.textContent = currentUserState.name;
+            if (headerAvatar) headerAvatar.src = currentUserState.avatar;
+            if (statusDot) statusDot.style.backgroundColor = '#10b981';
+
+            if (loggedInHeader) loggedInHeader.style.display = 'block';
+            if (authActions) authActions.style.display = 'none';
+            if (logoutBtn) logoutBtn.style.display = 'flex';
+
+            if (modalName) modalName.textContent = currentUserState.name;
+            if (modalEmail) modalEmail.textContent = currentUserState.email;
+            if (modalAvatar) modalAvatar.src = currentUserState.avatar;
+        } else {
+            if (headerName) headerName.textContent = 'Giriş Yap / Kaydol';
+            if (headerAvatar) headerAvatar.src = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80';
+            if (statusDot) statusDot.style.backgroundColor = '#94a3b8';
+
+            if (loggedInHeader) loggedInHeader.style.display = 'none';
+            if (authActions) authActions.style.display = 'block';
+            if (logoutBtn) logoutBtn.style.display = 'none';
+        }
+    }
+
+    function openLoginModal() {
+        const modal = document.getElementById('loginModalOverlay');
+        const userModal = document.getElementById('userModal');
+        if (userModal) userModal.classList.remove('show');
+        if (modal) modal.classList.add('show');
+    }
+
+    function closeLoginModal() {
+        const modal = document.getElementById('loginModalOverlay');
+        if (modal) modal.classList.remove('show');
+    }
+
+    function submitLogin() {
+        const email = document.getElementById('loginEmail')?.value || 'tuana.kara@example.com';
+        const namePart = email.split('@')[0];
+        const formattedName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+
+        currentUserState.isLoggedIn = true;
+        currentUserState.email = email;
+        currentUserState.name = formattedName === 'Tuana.kara' ? 'Tuana Kara' : formattedName;
+
+        updateHeaderUserUI();
+        closeLoginModal();
+        alert('🎉 Hoş geldiniz ' + currentUserState.name + '! Oturumunuz başarıyla açıldı.');
+    }
+
+    function quickSocialLogin(provider) {
+        currentUserState.isLoggedIn = true;
+        currentUserState.name = 'Tuana Kara';
+        currentUserState.email = 'tuana.kara@example.com';
+        updateHeaderUserUI();
+        closeLoginModal();
+        alert('🎉 ' + provider + ' ile hızlı giriş başarılı! Hoş geldiniz Tuana Kara.');
+    }
+
+    function openRegisterModal() {
+        const modal = document.getElementById('registerModalOverlay');
+        const userModal = document.getElementById('userModal');
+        if (userModal) userModal.classList.remove('show');
+        if (modal) modal.classList.add('show');
+    }
+
+    function closeRegisterModal() {
+        const modal = document.getElementById('registerModalOverlay');
+        if (modal) modal.classList.remove('show');
+    }
+
+    function submitRegister() {
+        const fullName = document.getElementById('regFullName')?.value || 'Yeni Üye';
+        const email = document.getElementById('regEmail')?.value || 'uye@example.com';
+
+        currentUserState.isLoggedIn = true;
+        currentUserState.name = fullName;
+        currentUserState.email = email;
+
+        updateHeaderUserUI();
+        closeRegisterModal();
+        alert('🎉 Üyeliğiniz başarıyla oluşturuldu! Hoş geldiniz ' + fullName + '.');
+    }
+
+    function openProfileModal() {
+        const modal = document.getElementById('profileModalOverlay');
+        const userModal = document.getElementById('userModal');
+        if (userModal) userModal.classList.remove('show');
+        if (modal) modal.classList.add('show');
+
+        const favCount = document.getElementById('profileFavCount');
+        if (favCount) favCount.textContent = favoriteIds.size;
+    }
+
+    function closeProfileModal() {
+        const modal = document.getElementById('profileModalOverlay');
+        if (modal) modal.classList.remove('show');
+    }
+
+    function saveProfileChanges() {
+        const newName = document.getElementById('profileInputName')?.value;
+        const newEmail = document.getElementById('profileInputEmail')?.value;
+
+        if (newName) currentUserState.name = newName;
+        if (newEmail) currentUserState.email = newEmail;
+
+        updateHeaderUserUI();
+        closeProfileModal();
+        alert('✅ Profil bilgileriniz başarıyla güncellendi.');
+    }
+
+    function logoutUser() {
+        currentUserState.isLoggedIn = false;
+        updateHeaderUserUI();
+        const userModal = document.getElementById('userModal');
+        if (userModal) userModal.classList.remove('show');
+        alert('👋 Oturumunuz kapatıldı. Tekrar görüşmek üzere!');
+    }
+
+    function openHostModal() {
+        const userModal = document.getElementById('userModal');
+        if (userModal) userModal.classList.remove('show');
+        alert('🏡 Ev Sahibi Paneli: New York\'taki evinizi kiraya vermek için başvuru formu açılıyor...');
+    }
+
     // Public API Methods Exposed to Window
     return {
         fetchData: fetchData,
@@ -1778,6 +1923,18 @@ const appUI = (function () {
         clearBoroughFilterModal: applyBoroughFilterFromModal,
         clearAllFavorites: clearAllFavorites,
         renderFavoritesPage: renderFavoritesPage,
+        openLoginModal: openLoginModal,
+        closeLoginModal: closeLoginModal,
+        submitLogin: submitLogin,
+        quickSocialLogin: quickSocialLogin,
+        openRegisterModal: openRegisterModal,
+        closeRegisterModal: closeRegisterModal,
+        submitRegister: submitRegister,
+        openProfileModal: openProfileModal,
+        closeProfileModal: closeProfileModal,
+        saveProfileChanges: saveProfileChanges,
+        logoutUser: logoutUser,
+        openHostModal: openHostModal,
         renderComparePage: renderComparePage,
         clearFieldError: clearFieldError,
         updateGuestCount: updateGuestCount
