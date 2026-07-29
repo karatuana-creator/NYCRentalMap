@@ -44,18 +44,22 @@
                     Favorilerim <span class="fav-count-badge" id="navFavBadge">0</span>
                 </a>
                 <a class="nav-item" href="javascript:void(0)" onclick="appUI.switchTab('compare')">Karşılaştır</a>
-                <div class="ai-nav-dropdown-wrap" id="aiNavWrap">
-                    <button class="ai-nav-pill" id="aiNavPill" onclick="appUI.toggleAiDropdown(event)" type="button">
-                        <span class="ai-pill-glow"></span>
-                        <i class="fa-solid fa-sparkles ai-pill-icon"></i>
-                        <span class="ai-pill-label">AI Asistan</span>
-                        <span class="ai-pill-badge">BETA</span>
-                    </button>
-                </div>
+
             </nav>
         </div>
 
         <div class="header-right">
+
+            <!-- AI Assistant Pill -->
+            <div class="ai-nav-dropdown-wrap" id="aiNavWrap">
+                <button class="ai-nav-pill" id="aiNavPill" onclick="appUI.toggleAiDropdown(event)" type="button">
+                    <span class="ai-pill-glow"></span>
+                    <i class="fa-solid fa-sparkles ai-pill-icon"></i>
+                    <span class="ai-pill-label">AI Asistan</span>
+                    <span class="ai-pill-badge">BETA</span>
+                </button>
+            </div>
+
             <!-- Search bar -->
             <div class="header-search">
                 <input type="text" id="topSearchInput" placeholder="Mahalle, adres veya anahtar kelime..." />
