@@ -502,6 +502,9 @@ const appUI = (function () {
 
     // ── Document Ready Handler ──
     document.addEventListener("DOMContentLoaded", function () {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW reg error:', err));
+        }
         loadFavoritesFromStorage();
         loadCompareFromStorage();
         syncFavoriteUI();
