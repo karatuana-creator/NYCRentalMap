@@ -1141,28 +1141,202 @@ const appUI = (function () {
         if (popupCard) popupCard.classList.remove('show');
     }
 
+    // ── Detail Full-Page Modal ──
+    var detailMiniMap = null;
+    var detailMiniMarker = null;
+
+    // Demo review data
+    var demoReviewers = [
+        { name: 'Sarah M.', color: '#6366f1' },
+        { name: 'Ahmet K.', color: '#ef4444' },
+        { name: 'Emily R.', color: '#10b981' },
+        { name: 'Carlos D.', color: '#f59e0b' },
+        { name: 'Yuki T.', color: '#8b5cf6' },
+        { name: 'Maria L.', color: '#ec4899' }
+    ];
+    var demoComments = [
+        'Harika bir konaklama deneyimiydi! Konum mükemmel, ev sahibi çok ilgili. Kesinlikle tekrar geleceğim.',
+        'Temiz ve bakımlı bir yer. Ulaşım çok kolay, metroya yürüme mesafesinde. Tavsiye ederim.',
+        'Fiyat/performans olarak çok iyi. Fotoğraflardaki gibi görünüyor. Mutfak ekipmanları yeterli.',
+        'Güzel bir mahallede, sessiz ve huzurlu. Çevrede restoran ve kafe çok fazla.',
+        'Ev sahibi çok yardımsever ve iletişime açık. Check-in süreci çok kolaydı.',
+        'Modern ve şık tasarım. WiFi hızlı, yatak rahat. İş seyahati için ideal.'
+    ];
+
     function openDetailModal() {
         if (!activeProperty) return;
         const modal = document.getElementById('detailModalOverlay');
         if (!modal) return;
 
-        document.getElementById('detailModalImg').src = activeProperty.imageUrl;
-        document.getElementById('modalTitle').textContent = activeProperty.name;
-        document.getElementById('modalLocation').textContent = '📍 ' + activeProperty.neighbourhood + ', ' + activeProperty.borough + ', New York, ABD';
-        document.getElementById('modalBadgeRoom').textContent = activeProperty.roomType;
-        document.getElementById('modalBadgeBorough').textContent = activeProperty.borough;
-        document.getElementById('modalBeds').textContent = activeProperty.beds + ' Yatak';
-        document.getElementById('modalGuests').textContent = activeProperty.guests + ' Misafir';
-        document.getElementById('modalRating').textContent = activeProperty.rating + ' Puan';
-        document.getElementById('modalReviews').textContent = activeProperty.reviews + ' Yorum';
-        document.getElementById('modalPrice').textContent = '$' + activeProperty.price;
-
+        // Show modal with loading
         modal.classList.add('show');
+        document.getElementById('dfmLoading').style.display = 'flex';
+        document.getElementById('dfmContent').style.display = 'none';
+
+        // Fetch full data from API
+        fetch('/Home/GetRentalById?id=' + activeProperty.id)
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success) {
+                    // Fallback to local data
+                    renderDetailModal(activeProperty, []);
+                    return;
+                }
+                renderDetailModal(data.listing, data.similarListings || []);
+            })
+            .catch(() => {
+                renderDetailModal(activeProperty, []);
+            });
+    }
+
+    function renderDetailModal(listing, similarListings) {
+        // Hide loading, show content
+        document.getElementById('dfmLoading').style.display = 'none';
+        document.getElementById('dfmContent').style.display = 'block';
+
+        // Hero image
+        document.getElementById('dfmImg').src = listing.imageUrl || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=600&q=80';
+
+        // Price
+        document.getElementById('dfmPrice').innerHTML = '$' + listing.price + ' <small>/ gece</small>';
+
+        // Fav button state
+        var favIds = JSON.parse(localStorage.getItem('nycFavorites') || '[]');
+        var dfmFavBtn = document.getElementById('dfmFavBtn');
+        var dfmFavIcon = document.getElementById('dfmFavIcon');
+        if (favIds.includes(listing.id)) {
+            dfmFavBtn.classList.add('active');
+            dfmFavIcon.className = 'fa-solid fa-heart';
+        } else {
+            dfmFavBtn.classList.remove('active');
+            dfmFavIcon.className = 'fa-regular fa-heart';
+        }
+
+        // Badges
+        document.getElementById('dfmBadgeRoom').textContent = listing.roomType || 'Entire home/apt';
+        document.getElementById('dfmBadgeBorough').textContent = listing.borough || 'New York';
+
+        // Title & Location
+        document.getElementById('dfmTitle').textContent = listing.name || 'İlan #' + listing.id;
+        document.getElementById('dfmLocation').innerHTML = '<i class="fa-solid fa-location-dot"></i> ' +
+            escapeHtml(listing.neighbourhood || '') + ', ' + escapeHtml(listing.borough || 'New York') + ', ABD';
+
+        // Rating
+        document.getElementById('dfmRating').textContent = listing.rating || '4.85';
+        document.getElementById('dfmReviewCount').textContent = listing.reviews || '0';
+
+        // Host
+        document.getElementById('dfmHostName').textContent = listing.hostName || 'Belirtilmemiş';
+        document.getElementById('dfmHostListings').textContent = listing.hostListings || '1';
+
+        // Stats
+        document.getElementById('dfmBeds').textContent = listing.beds || '1';
+        document.getElementById('dfmGuests').textContent = listing.guests || '2';
+        document.getElementById('dfmMinNights').textContent = listing.minNights || '1';
+        document.getElementById('dfmAvailability').textContent = listing.availability || '365';
+        document.getElementById('dfmReviewsPerMonth').textContent = listing.reviewsPerMonth ? listing.reviewsPerMonth.toFixed(1) : '0';
+        document.getElementById('dfmLastReview').textContent = listing.lastReview || '-';
+
+        // ── Mini Map ──
+        var mapWrap = document.getElementById('dfmMapWrap');
+        mapWrap.innerHTML = '';
+        var lat = listing.latitude || 40.7128;
+        var lng = listing.longitude || -74.0060;
+
+        setTimeout(function() {
+            if (detailMiniMap) { detailMiniMap.remove(); detailMiniMap = null; }
+            detailMiniMap = L.map(mapWrap, { scrollWheelZoom: false, zoomControl: true, dragging: true }).setView([lat, lng], 15);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap'
+            }).addTo(detailMiniMap);
+            detailMiniMarker = L.marker([lat, lng]).addTo(detailMiniMap)
+                .bindPopup('<b>' + escapeHtml(listing.name || '') + '</b><br>$' + listing.price + '/gece')
+                .openPopup();
+            setTimeout(function() { detailMiniMap.invalidateSize(); }, 200);
+        }, 100);
+
+        // ── Reviews ──
+        var reviewCount = listing.reviews || 0;
+        var displayReviews = Math.min(reviewCount, 6);
+        if (displayReviews < 2) displayReviews = 4; // always show at least demo reviews
+
+        document.getElementById('dfmReviewSectionCount').textContent = '(' + reviewCount + ')';
+
+        var reviewHtml = '';
+        for (var i = 0; i < displayReviews; i++) {
+            var reviewer = demoReviewers[i % demoReviewers.length];
+            var comment = demoComments[i % demoComments.length];
+            var stars = Math.floor(3.5 + Math.random() * 1.5 + 0.5);
+            var starsHtml = '';
+            for (var s = 0; s < 5; s++) {
+                starsHtml += s < stars ? '<i class="fa-solid fa-star"></i>' : '<i class="fa-regular fa-star"></i>';
+            }
+            var months = Math.floor(Math.random() * 11) + 1;
+
+            reviewHtml += '<div class="dfm-review-card">' +
+                '<div class="dfm-review-header">' +
+                    '<div class="dfm-review-avatar" style="background:' + reviewer.color + '">' + reviewer.name.charAt(0) + '</div>' +
+                    '<div class="dfm-review-meta">' +
+                        '<div class="dfm-review-name">' + reviewer.name + '</div>' +
+                        '<div class="dfm-review-stars">' + starsHtml + '</div>' +
+                        '<div class="dfm-review-date">' + months + ' ay önce</div>' +
+                    '</div>' +
+                '</div>' +
+                '<p class="dfm-review-text">' + comment + '</p>' +
+            '</div>';
+        }
+        document.getElementById('dfmReviewsGrid').innerHTML = reviewHtml;
+
+        // ── Similar Listings ──
+        var similarHtml = '';
+        if (similarListings && similarListings.length > 0) {
+            similarListings.forEach(function(s) {
+                similarHtml += '<div class="dfm-similar-card" onclick="appUI.openSimilarListing(' + s.id + ')">' +
+                    '<img class="dfm-similar-img" src="' + (s.imageUrl || '') + '" alt="' + escapeHtml(s.name || '') + '" />' +
+                    '<div class="dfm-similar-body">' +
+                        '<div class="dfm-similar-title">' + escapeHtml(s.name || 'İlan') + '</div>' +
+                        '<div class="dfm-similar-loc">📍 ' + escapeHtml(s.neighbourhood || '') + '</div>' +
+                        '<div class="dfm-similar-bottom">' +
+                            '<span class="dfm-similar-price">$' + s.price + '</span>' +
+                            '<span class="dfm-similar-rating"><i class="fa-solid fa-star"></i> ' + s.rating + '</span>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
+            });
+        } else {
+            similarHtml = '<p style="color:var(--text-muted); font-size:0.85rem;">Bu bölgede benzer ilan bulunamadı.</p>';
+        }
+        document.getElementById('dfmSimilarScroll').innerHTML = similarHtml;
+    }
+
+    function openSimilarListing(id) {
+        activeProperty = { id: id };
+        openDetailModal();
+    }
+
+    function toggleDetailFav() {
+        if (!activeProperty) return;
+        var favIds = JSON.parse(localStorage.getItem('nycFavorites') || '[]');
+        var idx = favIds.indexOf(activeProperty.id);
+        var dfmFavBtn = document.getElementById('dfmFavBtn');
+        var dfmFavIcon = document.getElementById('dfmFavIcon');
+        if (idx > -1) {
+            favIds.splice(idx, 1);
+            dfmFavBtn.classList.remove('active');
+            dfmFavIcon.className = 'fa-regular fa-heart';
+        } else {
+            favIds.push(activeProperty.id);
+            dfmFavBtn.classList.add('active');
+            dfmFavIcon.className = 'fa-solid fa-heart';
+        }
+        localStorage.setItem('nycFavorites', JSON.stringify(favIds));
+        if (typeof updateFavCount === 'function') updateFavCount();
     }
 
     function closeDetailModal() {
         const modal = document.getElementById('detailModalOverlay');
         if (modal) modal.classList.remove('show');
+        if (detailMiniMap) { detailMiniMap.remove(); detailMiniMap = null; }
     }
 
     function toggleTheme() {
@@ -2197,6 +2371,8 @@ const appUI = (function () {
         closeMapPopup: closeMapPopup,
         openDetailModal: openDetailModal,
         closeDetailModal: closeDetailModal,
+        openSimilarListing: openSimilarListing,
+        toggleDetailFav: toggleDetailFav,
         openBookingModal: openBookingModal,
         closeBookingModal: closeBookingModal,
         calculateBookingTotal: calculateBookingTotal,

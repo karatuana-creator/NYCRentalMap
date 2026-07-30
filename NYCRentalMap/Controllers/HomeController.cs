@@ -402,6 +402,81 @@ public class HomeController : Controller
         }
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetRentalById(int id)
+    {
+        try
+        {
+            var rental = await _context.Rentals
+                .FromSqlRaw("SELECT TOP 1 * FROM [AB_NYC_2019] WITH (NOLOCK) WHERE [id] = {0}", id)
+                .FirstOrDefaultAsync();
+
+            if (rental == null)
+                return Json(new { success = false, message = "İlan bulunamadı" });
+
+            var imgIdx = rental.Id % SampleImages.Length;
+            var detail = new
+            {
+                id = rental.Id,
+                name = rental.Name ?? "İlan #" + rental.Id,
+                hostId = rental.Host_Id,
+                hostName = rental.Host_Name ?? "Belirtilmemiş",
+                borough = rental.Neighbourhood_Group ?? "New York",
+                neighbourhood = rental.Neighbourhood ?? "Bilinmiyor",
+                latitude = FixLat(rental.Latitude),
+                longitude = FixLng(rental.Longitude),
+                roomType = rental.Room_Type ?? "Entire home/apt",
+                price = (int)rental.Price,
+                minNights = rental.Minimum_Nights,
+                reviews = (int)rental.Number_Of_Reviews,
+                lastReview = rental.Last_Review?.ToString("dd MMM yyyy"),
+                reviewsPerMonth = rental.Reviews_Per_Month ?? 0,
+                hostListings = rental.Calculated_Host_Listings_Count,
+                availability = (int)rental.Availability_365,
+                beds = (rental.Id % 4) + 1,
+                guests = (rental.Id % 6) + 2,
+                rating = Math.Round(4.5 + ((rental.Id % 45) / 100.0), 2),
+                imageUrl = SampleImages[imgIdx]
+            };
+
+            // Benzer ilanlar: aynı neighbourhood_group, farklı ID, benzer fiyat
+            var minP = Math.Max(0, rental.Price - 50);
+            var maxP = rental.Price + 50;
+            var similarRaw = await _context.Rentals
+                .FromSqlRaw(@"
+                    SELECT TOP 6 * FROM [AB_NYC_2019] WITH (NOLOCK)
+                    WHERE [neighbourhood_group] = {0}
+                      AND [id] != {1}
+                      AND [price] BETWEEN {2} AND {3}
+                    ORDER BY ABS([price] - {4})", 
+                    rental.Neighbourhood_Group, rental.Id, minP, maxP, (int)rental.Price)
+                .ToListAsync();
+
+            var similar = similarRaw.Select(s => {
+                var sIdx = s.Id % SampleImages.Length;
+                return new
+                {
+                    id = s.Id,
+                    name = s.Name ?? "İlan #" + s.Id,
+                    borough = s.Neighbourhood_Group ?? "New York",
+                    neighbourhood = s.Neighbourhood ?? "Bilinmiyor",
+                    roomType = s.Room_Type ?? "Entire home/apt",
+                    price = (int)s.Price,
+                    reviews = (int)s.Number_Of_Reviews,
+                    rating = Math.Round(4.5 + ((s.Id % 45) / 100.0), 2),
+                    imageUrl = SampleImages[sIdx]
+                };
+            }).ToList();
+
+            return Json(new { success = true, listing = detail, similarListings = similar });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("GetRentalById ERROR: " + ex.Message);
+            return Json(new { success = false, message = "Hata oluştu" });
+        }
+    }
+
     public IActionResult Privacy()
     {
         return View();

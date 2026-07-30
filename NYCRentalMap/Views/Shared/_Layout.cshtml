@@ -159,35 +159,125 @@
         </div>
     </div>
 
-    <!-- Property Detail Full Modal Overlay -->
-    <div class="full-modal-overlay" id="detailModalOverlay" onclick="if(event.target===this) appUI.closeDetailModal()">
-        <div class="detail-modal-card">
-            <button class="modal-close-icon" onclick="appUI.closeDetailModal()"><i class="fa-solid fa-xmark"></i></button>
-            <div class="modal-gallery">
-                <img id="detailModalImg" src="" alt="Main Property Image" />
+    <!-- Property Detail Full-Page Modal -->
+    <div class="detail-fullpage-overlay" id="detailModalOverlay" onclick="if(event.target===this) appUI.closeDetailModal()">
+        <div class="detail-fullpage-modal">
+            <!-- Close Button -->
+            <button class="dfm-close" onclick="appUI.closeDetailModal()" title="Kapat">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <!-- Loading Spinner -->
+            <div class="dfm-loading" id="dfmLoading">
+                <div class="dfm-spinner"></div>
+                <p>İlan yükleniyor...</p>
             </div>
-            <div class="modal-content-body">
-                <div class="modal-badge-row">
-                    <span class="badge-coral" id="modalBadgeRoom">Entire home/apt</span>
-                    <span class="badge-blue" id="modalBadgeBorough">Manhattan</span>
+
+            <!-- Content (hidden until loaded) -->
+            <div class="dfm-content" id="dfmContent" style="display:none;">
+
+                <!-- HERO SECTION: Image + Info -->
+                <div class="dfm-hero">
+                    <div class="dfm-hero-img">
+                        <img id="dfmImg" src="" alt="İlan Görseli" />
+                        <div class="dfm-img-overlay">
+                            <span class="dfm-price-tag" id="dfmPrice">$120 <small>/ gece</small></span>
+                        </div>
+                        <button class="dfm-fav-btn" id="dfmFavBtn" onclick="event.stopPropagation(); appUI.toggleDetailFav()">
+                            <i class="fa-regular fa-heart" id="dfmFavIcon"></i>
+                        </button>
+                    </div>
+                    <div class="dfm-hero-info">
+                        <div class="dfm-badges">
+                            <span class="dfm-badge dfm-badge-room" id="dfmBadgeRoom">Entire home/apt</span>
+                            <span class="dfm-badge dfm-badge-borough" id="dfmBadgeBorough">Manhattan</span>
+                        </div>
+                        <h1 class="dfm-title" id="dfmTitle">İlan Başlığı</h1>
+                        <p class="dfm-location" id="dfmLocation"><i class="fa-solid fa-location-dot"></i> Manhattan, New York</p>
+
+                        <div class="dfm-rating-row" id="dfmRatingRow">
+                            <div class="dfm-stars">
+                                <i class="fa-solid fa-star"></i>
+                                <span id="dfmRating">4.89</span>
+                            </div>
+                            <span class="dfm-review-count">(<span id="dfmReviewCount">120</span> yorum)</span>
+                        </div>
+
+                        <div class="dfm-host-row">
+                            <div class="dfm-host-avatar">
+                                <i class="fa-solid fa-user-tie"></i>
+                            </div>
+                            <div>
+                                <span class="dfm-host-label">Ev Sahibi</span>
+                                <strong id="dfmHostName">John</strong>
+                                <span class="dfm-host-listings">(<span id="dfmHostListings">5</span> ilan)</span>
+                            </div>
+                        </div>
+
+                        <hr class="dfm-divider" />
+
+                        <!-- Stats Grid -->
+                        <div class="dfm-stats-grid">
+                            <div class="dfm-stat">
+                                <i class="fa-solid fa-bed"></i>
+                                <span id="dfmBeds">2</span>
+                                <small>Yatak</small>
+                            </div>
+                            <div class="dfm-stat">
+                                <i class="fa-solid fa-user-group"></i>
+                                <span id="dfmGuests">4</span>
+                                <small>Misafir</small>
+                            </div>
+                            <div class="dfm-stat">
+                                <i class="fa-solid fa-moon"></i>
+                                <span id="dfmMinNights">1</span>
+                                <small>Min. Gece</small>
+                            </div>
+                            <div class="dfm-stat">
+                                <i class="fa-solid fa-calendar-check"></i>
+                                <span id="dfmAvailability">365</span>
+                                <small>Gün Müsait</small>
+                            </div>
+                            <div class="dfm-stat">
+                                <i class="fa-solid fa-chart-line"></i>
+                                <span id="dfmReviewsPerMonth">2.5</span>
+                                <small>Yorum/Ay</small>
+                            </div>
+                            <div class="dfm-stat">
+                                <i class="fa-solid fa-clock"></i>
+                                <span id="dfmLastReview">-</span>
+                                <small>Son Yorum</small>
+                            </div>
+                        </div>
+
+                        <button class="dfm-reserve-btn" onclick="appUI.openBookingModal()">
+                            <i class="fa-solid fa-calendar-check"></i> Hemen Rezerve Et
+                        </button>
+                    </div>
                 </div>
-                <h2 id="modalTitle">Harika Konumda Lüks Daire</h2>
-                <p class="modal-subtitle" id="modalLocation">📍 Manhattan, New York, ABD</p>
-                <hr />
-                <div class="modal-features-grid">
-                    <div><i class="fa-solid fa-bed icon-coral"></i> <strong id="modalBeds">2 Yatak</strong></div>
-                    <div><i class="fa-solid fa-user-group icon-coral"></i> <strong id="modalGuests">4 Misafir</strong></div>
-                    <div><i class="fa-solid fa-star icon-yellow"></i> <strong id="modalRating">4.89 Puan</strong></div>
-                    <div><i class="fa-solid fa-comments icon-blue"></i> <strong id="modalReviews">120 Yorum</strong></div>
+
+                <!-- MINI MAP SECTION -->
+                <div class="dfm-section">
+                    <h3 class="dfm-section-title"><i class="fa-solid fa-map-location-dot"></i> Konum</h3>
+                    <div class="dfm-map-wrap" id="dfmMapWrap"></div>
                 </div>
-                <hr />
-                <p class="modal-desc">
-                    New York'un merkezinde yer alan bu şık ve konforlu daire, unutulmaz bir konaklama deneyimi sunuyor. Şehrin tüm cazibe merkezlerine yürüme mesafesinde!
-                </p>
-                <div class="modal-bottom-bar">
-                    <div class="price-huge"><strong id="modalPrice">$120</strong> <small>/ gece</small></div>
-                    <button class="btn-primary-coral btn-lg" onclick="appUI.openBookingModal()"><i class="fa-solid fa-calendar-check"></i> Hemen Rezerve Et</button>
+
+                <!-- REVIEWS SECTION -->
+                <div class="dfm-section">
+                    <h3 class="dfm-section-title"><i class="fa-solid fa-comments"></i> Yorumlar <span class="dfm-section-count" id="dfmReviewSectionCount"></span></h3>
+                    <div class="dfm-reviews-grid" id="dfmReviewsGrid">
+                        <!-- JS renders review cards here -->
+                    </div>
                 </div>
+
+                <!-- SIMILAR LISTINGS SECTION -->
+                <div class="dfm-section">
+                    <h3 class="dfm-section-title"><i class="fa-solid fa-house-circle-check"></i> Benzer İlanlar</h3>
+                    <div class="dfm-similar-scroll" id="dfmSimilarScroll">
+                        <!-- JS renders similar listing cards here -->
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
