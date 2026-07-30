@@ -1596,10 +1596,23 @@ const appUI = (function () {
         }
     }
 
+    function setActiveMobileNav(el) {
+        if (!el) return;
+        document.querySelectorAll('.mobile-nav-item').forEach(item => item.classList.remove('active'));
+        el.classList.add('active');
+    }
+
     let isScrollSpyLock = false;
 
     function switchTab(tabName) {
         const mapContainer = document.getElementById('mapSectionContainer');
+
+        // Highlight mobile nav bar items
+        const mobileTarget = document.querySelector(`.mobile-nav-item[onclick*="${tabName}"]`);
+        if (mobileTarget) {
+            document.querySelectorAll('.mobile-nav-item').forEach(m => m.classList.remove('active'));
+            mobileTarget.classList.add('active');
+        }
 
         if (tabName === 'map') {
             const mapLink = document.querySelector(`.nav-item[onclick*="map"]`);
@@ -2630,6 +2643,7 @@ const appUI = (function () {
         addActivePropertyToCompare: addActivePropertyToCompare,
         removeFromCompare: removeFromCompare,
         clearCompareList: clearCompareList,
+        setActiveMobileNav: setActiveMobileNav,
         clearFieldError: clearFieldError,
         updateGuestCount: updateGuestCount
     };

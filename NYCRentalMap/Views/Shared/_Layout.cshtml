@@ -85,6 +85,30 @@
         @RenderBody()
     </main>
 
+    <!-- Mobile Bottom Navigation Bar (Native App Style) -->
+    <nav class="mobile-bottom-nav">
+        <a class="mobile-nav-item active" href="javascript:void(0)" onclick="appUI.switchTab('home'); appUI.setActiveMobileNav(this)">
+            <i class="fa-solid fa-house"></i>
+            <span>Ana Sayfa</span>
+        </a>
+        <a class="mobile-nav-item" href="javascript:void(0)" onclick="appUI.switchTab('map'); appUI.setActiveMobileNav(this)">
+            <i class="fa-solid fa-map-location-dot"></i>
+            <span>Harita</span>
+        </a>
+        <a class="mobile-nav-item" href="javascript:void(0)" onclick="appUI.toggleSidebarPanel(); appUI.setActiveMobileNav(this)">
+            <i class="fa-solid fa-sliders"></i>
+            <span>Filtreler</span>
+        </a>
+        <a class="mobile-nav-item" href="javascript:void(0)" onclick="appUI.switchTab('favorites'); appUI.setActiveMobileNav(this)">
+            <i class="fa-solid fa-heart"></i>
+            <span>Favoriler</span>
+        </a>
+        <a class="mobile-nav-item" href="javascript:void(0)" onclick="appUI.switchTab('compare'); appUI.setActiveMobileNav(this)">
+            <i class="fa-solid fa-code-compare"></i>
+            <span>Karşılaştır</span>
+        </a>
+    </nav>
+
     <!-- Notifications Modal Dropdown -->
     <div class="dropdown-modal notif-modal" id="notifModal">
         <div class="modal-header">
