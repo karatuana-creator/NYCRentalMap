@@ -582,14 +582,14 @@ const appUI = (function () {
     let allMarkersGroup = null;
     let allMarkersLoaded = false;
 
-    // Red Google Maps style SVG pin divIcon factory
+    // Red Google Maps style SVG pin divIcon factory (Ultra-Vibrant Red Pin)
     function makeRedPinIcon() {
         return L.divIcon({
             className: 'custom-red-pin-wrap',
-            html: `<div style="position:relative;width:24px;height:32px;cursor:pointer;"><svg width="24" height="32" viewBox="0 0 384 512" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter:drop-shadow(0 3px 5px rgba(0,0,0,0.35));"><path fill="#ea4335" d="M172.268 501.67C26.97 291.031 0 269.413 0 192 0 85.961 85.961 0 192 0s192 85.961 192 192c0 77.413-26.97 99.031-172.268 309.67-9.535 13.774-29.93 13.773-39.464 0z"/><circle cx="192" cy="192" r="64" fill="#fff"/></svg></div>`,
-            iconSize: [24, 32],
-            iconAnchor: [12, 32],
-            popupAnchor: [0, -32]
+            html: `<div style="position:relative;width:30px;height:38px;cursor:pointer;filter:drop-shadow(0 4px 8px rgba(234,67,53,0.6));"><svg width="30" height="38" viewBox="0 0 384 512" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="#ea4335" d="M172.268 501.67C26.97 291.031 0 269.413 0 192 0 85.961 85.961 0 192 0s192 85.961 192 192c0 77.413-26.97 99.031-172.268 309.67-9.535 13.774-29.93 13.773-39.464 0z"/><circle cx="192" cy="192" r="70" fill="#ffffff"/><circle cx="192" cy="192" r="35" fill="#ea4335"/></svg></div>`,
+            iconSize: [30, 38],
+            iconAnchor: [15, 38],
+            popupAnchor: [0, -36]
         });
     }
 
