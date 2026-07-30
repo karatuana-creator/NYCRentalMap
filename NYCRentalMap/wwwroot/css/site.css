@@ -2177,6 +2177,82 @@ body {
     }
 }
 
+/* ==========================================================================
+   PORTRAIT MODE ULTRA-CRISP OPTIMIZATION ENGINE (Telefon Dikey Görünüm)
+   ========================================================================== */
+@media (max-width: 576px), (orientation: portrait) and (max-width: 768px) {
+    html, body {
+        -webkit-font-smoothing: antialiased !important;
+        -moz-osx-font-smoothing: grayscale !important;
+        text-rendering: optimizeLegibility !important;
+    }
+
+    /* Section Headings Fluid Typography */
+    .section-heading, h2, h3 {
+        font-size: clamp(1.1rem, 4vw, 1.4rem) !important;
+        line-height: 1.3 !important;
+        word-break: break-word !important;
+    }
+
+    /* Crisp Canvas Chart Height in Portrait Mode */
+    .bar-chart-wrapper,
+    .chart-sm-wrapper {
+        height: 200px !important;
+        width: 100% !important;
+        position: relative !important;
+    }
+
+    /* KPI Cards in Portrait */
+    .kpi-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.6rem !important;
+    }
+
+    .kpi-card {
+        padding: 0.75rem !important;
+        border-radius: 14px !important;
+    }
+
+    .kpi-val {
+        font-size: 1.15rem !important;
+    }
+
+    /* Buttons & Touch Targets */
+    button, .btn-primary-coral, .btn-outline-dark, .mobile-nav-item {
+        touch-action: manipulation;
+        min-height: 44px;
+    }
+
+    /* Header in Portrait */
+    .app-header {
+        height: 56px !important;
+        padding: 0 0.85rem !important;
+    }
+
+    .brand-name {
+        font-size: 1.05rem !important;
+        font-weight: 800 !important;
+    }
+
+    /* Modal Full Height in Portrait */
+    .detail-fullpage-modal {
+        width: 100vw !important;
+        height: 94vh !important;
+        border-radius: 20px 20px 0 0 !important;
+    }
+
+    /* Bottom Nav Bar Touch Comfort */
+    .mobile-bottom-nav {
+        height: 64px !important;
+        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 2px) !important;
+    }
+
+    .mobile-nav-item span {
+        font-size: 0.7rem !important;
+        font-weight: 700 !important;
+    }
+}
+
 @media (min-width: 769px) {
     .mobile-bottom-nav {
         display: none !important;
