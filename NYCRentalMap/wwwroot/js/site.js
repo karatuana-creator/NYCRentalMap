@@ -68,8 +68,9 @@ const appUI = (function () {
                     {
                         id: 101,
                         name: 'Bronx 2+ Misafir Evleri',
+                        borough: 'Bronx',
                         boroughs: ['Bronx'],
-                        priceMax: 1000,
+                        priceMax: 10000,
                         roomTypes: ['Entire home/apt', 'Private room'],
                         adults: 2, children: 0, babies: 0, pets: 0,
                         keyword: '',
@@ -78,6 +79,7 @@ const appUI = (function () {
                     {
                         id: 102,
                         name: 'Manhattan Daireleri (<$250)',
+                        borough: 'Manhattan',
                         boroughs: ['Manhattan'],
                         priceMax: 250,
                         roomTypes: ['Entire home/apt'],
@@ -121,7 +123,7 @@ const appUI = (function () {
         // 1. Render Sidebar & Modal Lists
         let html = '<div style="display:flex; flex-direction:column; gap:0.55rem;">';
         savedSearches.forEach(item => {
-            const boroughText = item.boroughs && item.boroughs.length > 0 ? item.boroughs.join(', ') : 'Tüm Bölgeler';
+            const bName = item.borough || (item.boroughs && item.boroughs.length > 0 ? item.boroughs[0] : 'Tüm Bölgeler');
             const guestCount = (item.adults || 0) + (item.children || 0);
             
             html += `
@@ -132,7 +134,7 @@ const appUI = (function () {
                             <span>${escapeHtml(item.name)}</span>
                         </div>
                         <div style="font-size:0.7rem; color:var(--text-muted, #64748b);">
-                            📍 ${escapeHtml(boroughText)} · 💵 Max $${item.priceMax} ${guestCount > 0 ? `· 👥 ${guestCount} Misafir` : ''}
+                            📍 ${escapeHtml(bName || 'Tüm Bölgeler')} · 💵 Max $${item.priceMax || 10000} ${guestCount > 0 ? `· 👥 ${guestCount} Misafir` : ''}
                         </div>
                     </div>
                     <div style="display:flex; align-items:center; gap:0.35rem;">
@@ -173,14 +175,13 @@ const appUI = (function () {
         if (!modal) return;
 
         // Auto generate smart default filter title
-        let selectedBoroughs = [];
-        document.querySelectorAll('.chk-borough:checked').forEach(cb => selectedBoroughs.push(cb.value));
-        const boroughStr = selectedBoroughs.length > 0 ? selectedBoroughs.slice(0, 2).join(', ') : 'New York';
-        const priceVal = document.getElementById('priceRangeInput') ? document.getElementById('priceRangeInput').value : '1000';
+        const selBoroughEl = document.getElementById('selBorough');
+        const boroughVal = selBoroughEl && selBoroughEl.value ? selBoroughEl.value : 'New York';
+        const priceVal = document.getElementById('priceRangeInput') ? document.getElementById('priceRangeInput').value : '10000';
         const adults = parseInt(document.getElementById('cntAdults') ? document.getElementById('cntAdults').textContent : '0') || 0;
 
         if (input) {
-            input.value = `${boroughStr} ${adults > 0 ? adults + ' Misafir ' : ''}($${priceVal})`;
+            input.value = `${boroughVal} ${adults > 0 ? adults + ' Misafir ' : ''}(Max $${priceVal})`;
         }
 
         modal.style.display = 'flex';
@@ -204,8 +205,11 @@ const appUI = (function () {
             return;
         }
 
-        let selectedBoroughs = [];
-        document.querySelectorAll('.chk-borough:checked').forEach(cb => selectedBoroughs.push(cb.value));
+        const selBoroughEl = document.getElementById('selBorough');
+        const boroughVal = selBoroughEl ? selBoroughEl.value : '';
+        const selMinNightsEl = document.getElementById('selMinNights');
+        const minNightsVal = selMinNightsEl ? selMinNightsEl.value : '';
+
         let selectedRooms = [];
         document.querySelectorAll('.chk-room:checked').forEach(cb => selectedRooms.push(cb.value));
 
@@ -219,7 +223,8 @@ const appUI = (function () {
         const newSearch = {
             id: Date.now(),
             name: name,
-            boroughs: selectedBoroughs,
+            borough: boroughVal,
+            minNights: minNightsVal,
             priceMax: priceMax,
             roomTypes: selectedRooms,
             adults: adults,
@@ -241,35 +246,54 @@ const appUI = (function () {
         const item = savedSearches.find(s => s.id == id);
         if (!item) return;
 
-        // Restore Boroughs Checkboxes
-        document.querySelectorAll('.chk-borough').forEach(cb => {
-            cb.checked = item.boroughs && item.boroughs.includes(cb.value);
-        });
+        // 1. Restore Borough Dropdown (#selBorough)
+        const selBoroughEl = document.getElementById('selBorough');
+        if (selBoroughEl) {
+            const bVal = item.borough || (item.boroughs && item.boroughs.length > 0 ? item.boroughs[0] : '');
+            selBoroughEl.value = bVal || '';
+        }
 
-        // Restore Room Type Checkboxes
-        document.querySelectorAll('.chk-room').forEach(cb => {
-            cb.checked = item.roomTypes && item.roomTypes.includes(cb.value);
-        });
+        // 2. Restore Minimum Nights Dropdown (#selMinNights)
+        const selMinNightsEl = document.getElementById('selMinNights');
+        if (selMinNightsEl && item.minNights !== undefined) {
+            selMinNightsEl.value = item.minNights || '';
+        }
 
-        // Restore Price Range
+        // 3. Restore Room Type Checkboxes (.chk-room)
+        if (item.roomTypes && Array.isArray(item.roomTypes)) {
+            document.querySelectorAll('.chk-room').forEach(cb => {
+                cb.checked = item.roomTypes.includes(cb.value);
+            });
+            const chkAll = document.getElementById('chkRoomAll');
+            const allRoomsChecked = document.querySelectorAll('.chk-room:checked').length === 3;
+            if (chkAll) chkAll.checked = allRoomsChecked;
+        }
+
+        // 4. Restore Price Range Slider (#priceRangeInput)
         const priceInput = document.getElementById('priceRangeInput');
         if (priceInput && item.priceMax !== undefined) {
             priceInput.value = item.priceMax;
             updatePriceLabel(item.priceMax);
         }
 
-        // Restore Guest Counts
+        // 5. Restore Guest Counts
         if (item.adults !== undefined && document.getElementById('cntAdults')) document.getElementById('cntAdults').textContent = item.adults;
         if (item.children !== undefined && document.getElementById('cntChildren')) document.getElementById('cntChildren').textContent = item.children;
         if (item.babies !== undefined && document.getElementById('cntBabies')) document.getElementById('cntBabies').textContent = item.babies;
         if (item.pets !== undefined && document.getElementById('cntPets')) document.getElementById('cntPets').textContent = item.pets;
 
-        // Restore Keyword
-        if (item.keyword !== undefined && document.getElementById('keywordInput')) document.getElementById('keywordInput').value = item.keyword;
+        // 6. Restore Keyword Search Input (#keywordInput)
+        if (item.keyword !== undefined) {
+            const kwInput = document.getElementById('keywordInput');
+            if (kwInput) kwInput.value = item.keyword || '';
+            const topInput = document.getElementById('topSearchInput');
+            if (topInput) topInput.value = item.keyword || '';
+        }
 
-        // Trigger Data Fetch & Search
+        // 7. Execute Data Fetch & Smoothly Scroll to Matching Listings Grid
         fetchData(1, true);
         closeSidebarOnMobile();
+        closeSaveFilterModal();
         showToast(`⚡ "${item.name}" Filtresi Çalıştırıldı!`);
     }
 
