@@ -1387,10 +1387,21 @@ body {
     color: #9ca3af;
 }
 
-/* Detail Modal Overlay */
-/* ==========================================================================
-   DETAIL FULL-PAGE MODAL — Premium Design
-   ========================================================================== */
+.full-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(6px);
+    z-index: 4000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.full-modal-overlay.show {
+    display: flex;
+    animation: dfmFadeIn 0.3s ease;
+}
 
 .detail-fullpage-overlay {
     position: fixed;
