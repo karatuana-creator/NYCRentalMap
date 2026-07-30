@@ -93,6 +93,80 @@
         @RenderBody()
     </main>
 
+    <!-- Professional Modern Footer -->
+    <footer class="app-footer-pro">
+        <div class="footer-container">
+            <div class="footer-grid">
+                <!-- Column 1: Brand Info -->
+                <div class="footer-col brand-col">
+                    <div class="footer-brand-logo">
+                        <div class="logo-badge"><i class="fa-solid fa-location-dot"></i></div>
+                        <span class="brand-name">NYC Rental Map</span>
+                    </div>
+                    <p class="footer-desc">
+                        New York genelinde 48.800+ kiralık ev ilanını interaktif harita üzerinde keşfedin, canlı fiyat trendlerini analiz edin ve hayalinizdeki evi bulun.
+                    </p>
+                    <div class="footer-social-links">
+                        <a href="https://github.com/karatuana-creator/NYCRentalMap.git" target="_blank" class="social-icon" title="GitHub Repository"><i class="fa-brands fa-github"></i></a>
+                        <a href="javascript:void(0)" class="social-icon" title="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+                        <a href="javascript:void(0)" class="social-icon" title="Twitter / X"><i class="fa-brands fa-x-twitter"></i></a>
+                        <a href="javascript:void(0)" class="social-icon" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    </div>
+                </div>
+
+                <!-- Column 2: Quick Links -->
+                <div class="footer-col">
+                    <h4 class="footer-title">Hızlı Erişim</h4>
+                    <ul class="footer-links">
+                        <li><a href="javascript:void(0)" onclick="appUI.switchTab('home')"><i class="fa-solid fa-angle-right"></i> Ana Sayfa</a></li>
+                        <li><a href="javascript:void(0)" onclick="appUI.switchTab('map')"><i class="fa-solid fa-angle-right"></i> İnteraktif Harita</a></li>
+                        <li><a href="javascript:void(0)" onclick="appUI.switchTab('explore')"><i class="fa-solid fa-angle-right"></i> Keşfet & Rehber</a></li>
+                        <li><a href="javascript:void(0)" onclick="appUI.switchTab('statistics')"><i class="fa-solid fa-angle-right"></i> Piyasa İstatistikleri</a></li>
+                        <li><a href="javascript:void(0)" onclick="appUI.switchTab('favorites')"><i class="fa-solid fa-angle-right"></i> Favorilerim</a></li>
+                        <li><a href="javascript:void(0)" onclick="appUI.switchTab('compare')"><i class="fa-solid fa-angle-right"></i> Karşılaştırma Modu</a></li>
+                    </ul>
+                </div>
+
+                <!-- Column 3: Boroughs -->
+                <div class="footer-col">
+                    <h4 class="footer-title">Popüler Bölgeler</h4>
+                    <ul class="footer-links">
+                        <li><a href="javascript:void(0)" onclick="appUI.applySavedSearch(102)"><i class="fa-solid fa-building"></i> Manhattan Kiralık Evler</a></li>
+                        <li><a href="javascript:void(0)" onclick="appUI.switchTab('explore')"><i class="fa-solid fa-city"></i> Brooklyn Loft & Daireler</a></li>
+                        <li><a href="javascript:void(0)" onclick="appUI.switchTab('explore')"><i class="fa-solid fa-tree"></i> Queens Kültürel İlanlar</a></li>
+                        <li><a href="javascript:void(0)" onclick="appUI.applySavedSearch(101)"><i class="fa-solid fa-house-user"></i> Bronx Bütçe Dostu Daireler</a></li>
+                        <li><a href="javascript:void(0)" onclick="appUI.switchTab('explore')"><i class="fa-solid fa-water"></i> Staten Island Evleri</a></li>
+                    </ul>
+                </div>
+
+                <!-- Column 4: Platform Features & Contact -->
+                <div class="footer-col">
+                    <h4 class="footer-title">Platform Özellikleri</h4>
+                    <div class="footer-features-badges">
+                        <span class="f-badge"><i class="fa-solid fa-mobile-screen"></i> PWA Mobil App</span>
+                        <span class="f-badge"><i class="fa-solid fa-bookmark"></i> Kayıtlı Aramalar</span>
+                        <span class="f-badge"><i class="fa-solid fa-robot"></i> AI NYC Asistan</span>
+                        <span class="f-badge"><i class="fa-solid fa-chart-pie"></i> Canlı Grafikler</span>
+                    </div>
+                    <div class="footer-contact-info" style="margin-top: 1rem;">
+                        <div class="f-contact-item"><i class="fa-solid fa-envelope"></i> <span>tuana.kara@nycrentalmap.com</span></div>
+                        <div class="f-contact-item"><i class="fa-solid fa-shield-halved"></i> <span>Gelişmiş Güvenli Veri Altyapısı</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Bottom Bar -->
+            <div class="footer-bottom">
+                <div class="footer-bottom-left">
+                    <span>© 2026 <strong>NYC Rental Map</strong>. Tüm hakları saklıdır.</span>
+                </div>
+                <div class="footer-bottom-right">
+                    <span>Tuana Kara tarafından ❤️ ile geliştirildi.</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
     <!-- Mobile Bottom Navigation Bar (Native App Style) -->
     <nav class="mobile-bottom-nav">
         <a class="mobile-nav-item active" href="javascript:void(0)" onclick="appUI.switchTab('home'); appUI.setActiveMobileNav(this)">

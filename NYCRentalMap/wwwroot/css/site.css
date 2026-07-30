@@ -3846,3 +3846,189 @@ body {
     padding: 0.7rem 1.1rem;
     flex-shrink: 0;
 }
+
+/* ─────────────────────────────────────
+   PROFESSIONAL FOOTER STYLES
+   ───────────────────────────────────── */
+.app-footer-pro {
+    background: var(--bg-card, #ffffff);
+    border-top: 1px solid var(--border-color, #e2e8f0);
+    padding: 3.5rem 0 1.5rem 0;
+    margin-top: 3.5rem;
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--text-main, #1e293b);
+}
+
+.footer-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+}
+
+.footer-grid {
+    display: grid;
+    grid-template-columns: 2.2fr 1fr 1.2fr 1.5fr;
+    gap: 2.5rem;
+    margin-bottom: 2.5rem;
+}
+
+@media (max-width: 992px) {
+    .footer-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .footer-grid {
+        grid-template-columns: 1fr;
+        gap: 1.8rem;
+    }
+}
+
+.footer-brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.85rem;
+}
+
+.footer-desc {
+    font-size: 0.84rem;
+    color: var(--text-muted, #64748b);
+    line-height: 1.6;
+    margin-bottom: 1.25rem;
+    max-width: 380px;
+}
+
+.footer-social-links {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.social-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg-main, #f8fafc);
+    border: 1px solid var(--border-color, #e2e8f0);
+    color: var(--text-main, #334155);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    text-decoration: none;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.social-icon:hover {
+    background: var(--accent-red, #f43f5e);
+    color: #ffffff;
+    border-color: var(--accent-red, #f43f5e);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(244, 63, 94, 0.3);
+}
+
+.footer-title {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--text-main, #0f172a);
+    margin: 0 0 1rem 0;
+    position: relative;
+    letter-spacing: -0.2px;
+}
+
+.footer-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.footer-links a {
+    color: var(--text-muted, #64748b);
+    text-decoration: none;
+    font-size: 0.83rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.footer-links a i {
+    font-size: 0.72rem;
+    transition: transform 0.2s ease;
+}
+
+.footer-links a:hover {
+    color: var(--accent-red, #f43f5e);
+    transform: translateX(3px);
+}
+
+.footer-links a:hover i {
+    transform: translateX(2px);
+}
+
+.footer-features-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+
+.f-badge {
+    background: var(--bg-main, #f8fafc);
+    border: 1px solid var(--border-color, #e2e8f0);
+    color: var(--text-main, #334155);
+    padding: 5px 10px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.f-badge i {
+    color: var(--accent-red, #f43f5e);
+}
+
+.footer-contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.f-contact-item {
+    font-size: 0.78rem;
+    color: var(--text-muted, #64748b);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.f-contact-item i {
+    color: var(--accent-red, #f43f5e);
+    font-size: 0.85rem;
+}
+
+.footer-bottom {
+    border-top: 1px solid var(--border-color, #e2e8f0);
+    padding-top: 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    font-size: 0.8rem;
+    color: var(--text-muted, #64748b);
+}
+
+@media (max-width: 768px) {
+    .app-footer-pro {
+        padding-bottom: 5.5rem; /* Space for mobile bottom nav bar */
+    }
+}
