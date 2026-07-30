@@ -127,18 +127,18 @@ const appUI = (function () {
             const guestCount = (item.adults || 0) + (item.children || 0);
             
             html += `
-                <div style="background:var(--bg-main, #f8fafc); border:1px solid var(--border-color, #e2e8f0); border-radius:12px; padding:0.65rem 0.85rem; display:flex; align-items:center; justify-content:space-between; gap:0.5rem; transition:all 0.2s ease;">
+                <div style="background:var(--bg-main, #faf7f2); border:1px solid var(--border-color, #e8dfd5); border-radius:12px; padding:0.65rem 0.85rem; display:flex; align-items:center; justify-content:space-between; gap:0.5rem; transition:all 0.2s ease;">
                     <div style="flex:1; cursor:pointer;" onclick="appUI.applySavedSearch(${item.id})">
-                        <div style="font-weight:700; font-size:0.83rem; color:var(--text-main, #0f172a); margin-bottom:2px; display:flex; align-items:center; gap:0.35rem;">
-                            <i class="fa-solid fa-bookmark" style="color:var(--accent-red, #f43f5e); font-size:0.75rem;"></i>
+                        <div style="font-weight:700; font-size:0.83rem; color:#5c3d28; margin-bottom:2px; display:flex; align-items:center; gap:0.35rem;">
+                            <i class="fa-solid fa-bookmark" style="color:#a87958; font-size:0.75rem;"></i>
                             <span>${escapeHtml(item.name)}</span>
                         </div>
-                        <div style="font-size:0.7rem; color:var(--text-muted, #64748b);">
+                        <div style="font-size:0.7rem; color:#8c6b54;">
                             📍 ${escapeHtml(bName || 'Tüm Bölgeler')} · 💵 Max $${item.priceMax || 10000} ${guestCount > 0 ? `· 👥 ${guestCount} Misafir` : ''}
                         </div>
                     </div>
                     <div style="display:flex; align-items:center; gap:0.35rem;">
-                        <button type="button" onclick="appUI.applySavedSearch(${item.id})" style="background:linear-gradient(135deg, #f43f5e, #e11d48); color:#fff; border:none; border-radius:8px; padding:5px 10px; font-size:0.72rem; font-weight:700; cursor:pointer; box-shadow:0 2px 6px rgba(244,63,94,0.25);" title="Filtreyi Çalıştır">
+                        <button type="button" onclick="appUI.applySavedSearch(${item.id})" style="background:linear-gradient(135deg, #c69b7b, #a87958); color:#fff; border:none; border-radius:8px; padding:5px 10px; font-size:0.72rem; font-weight:700; cursor:pointer; box-shadow:0 2px 6px rgba(198,155,123,0.3);" title="Filtreyi Çalıştır">
                             ⚡ Çalıştır
                         </button>
                         <button type="button" onclick="appUI.deleteSavedSearch(${item.id})" style="background:none; border:none; color:var(--text-muted); font-size:0.8rem; cursor:pointer; padding:4px;" title="Sil">
@@ -157,10 +157,10 @@ const appUI = (function () {
         let chipsHtml = '';
         savedSearches.forEach(item => {
             chipsHtml += `
-                <div style="display:inline-flex; align-items:center; gap:6px; background:var(--bg-card, #fff); border:1px solid var(--border-color, #e2e8f0); color:var(--text-main, #1e293b); padding:6px 14px; border-radius:20px; font-size:0.8rem; font-weight:700; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.03); transition:all 0.2s ease;" onclick="appUI.applySavedSearch(${item.id})">
-                    <i class="fa-solid fa-bookmark" style="color:var(--accent-red, #f43f5e); font-size:0.75rem;"></i>
+                <div style="display:inline-flex; align-items:center; gap:6px; background:#faf7f2; border:1px solid #e3d9cc; color:#5c3d28; padding:6px 14px; border-radius:20px; font-size:0.8rem; font-weight:700; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.02); transition:all 0.2s ease;" onclick="appUI.applySavedSearch(${item.id})">
+                    <i class="fa-solid fa-bookmark" style="color:#a87958; font-size:0.75rem;"></i>
                     <span>${escapeHtml(item.name)}</span>
-                    <span style="opacity:0.4; font-size:0.85rem; margin-left:4px; font-weight:800;" onclick="event.stopPropagation(); appUI.deleteSavedSearch(${item.id})" title="Sil">×</span>
+                    <span style="opacity:0.5; font-size:0.85rem; margin-left:4px; font-weight:800;" onclick="event.stopPropagation(); appUI.deleteSavedSearch(${item.id})" title="Sil">×</span>
                 </div>
             `;
         });
