@@ -245,6 +245,28 @@
     <!-- 2. CENTER MAIN DASHBOARD: KPIS, CHARTS, LISTINGS, BOTTOM CHARTS -->
     <div class="center-content">
 
+        <!-- Top Featured Banner: Kayıtlı Aramalarım (Sahibinden Style Saved Filters) -->
+        <section class="saved-searches-top-banner" style="margin-bottom: 1rem; padding: 1rem 1.25rem; background: linear-gradient(135deg, rgba(245,158,11,0.1), rgba(217,119,6,0.05)); border: 1.5px solid #f59e0b; border-radius: 20px; box-shadow: 0 4px 18px rgba(245,158,11,0.12);">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; margin-bottom: 0.75rem;">
+                <div style="display:flex; align-items:center; gap:0.6rem;">
+                    <div style="width:36px; height:36px; border-radius:12px; background:#f59e0b; color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.1rem; box-shadow:0 4px 12px rgba(245,158,11,0.4);">
+                        <i class="fa-solid fa-star"></i>
+                    </div>
+                    <div>
+                        <h4 style="margin:0; font-size:1rem; font-weight:800; color:var(--text-main);">Kayıtlı Aramalarım (Favori Filtrelerim)</h4>
+                        <p style="margin:0; font-size:0.78rem; color:var(--text-muted);">Sık kullandığınız arama kriterlerini tek tıkla uygulayın veya yeni filtre kaydedin.</p>
+                    </div>
+                </div>
+                <button type="button" onclick="appUI.openSaveFilterModal()" style="background:linear-gradient(135deg,#f59e0b,#d97706); color:#fff; border:none; padding:0.6rem 1.2rem; border-radius:12px; font-weight:700; font-size:0.83rem; cursor:pointer; box-shadow:0 4px 12px rgba(245,158,11,0.35); display:flex; align-items:center; gap:0.4rem;">
+                    <i class="fa-solid fa-plus-circle"></i> + Bu Filtreyi Kaydet
+                </button>
+            </div>
+
+            <div id="topSavedSearchesChipsContainer" style="display:flex; flex-wrap:wrap; gap:0.6rem; align-items:center;">
+                <!-- JS renders chips here -->
+            </div>
+        </section>
+
         <!-- 6 KPI Metric Cards Row -->
         <section class="kpi-grid">
             <div class="kpi-card">

@@ -103,13 +103,15 @@ const appUI = (function () {
     function renderSavedSearches() {
         const container = document.getElementById('savedFiltersListContainer');
         const chipsContainer = document.getElementById('savedSearchesChipsContainer');
+        const topChipsContainer = document.getElementById('topSavedSearchesChipsContainer');
         const badge = document.getElementById('savedFiltersCountBadge');
         if (badge) badge.textContent = `${savedSearches.length} Arama`;
 
         if (savedSearches.length === 0) {
-            const emptyHtml = '<div style="font-size:0.78rem; color:var(--text-muted); text-align:center; padding:0.5rem 0;">Henüz kaydedilmiş aramanız yok. Üstteki butonla hemen ekleyebilirsiniz.</div>';
+            const emptyHtml = '<div style="font-size:0.78rem; color:var(--text-muted); text-align:center; padding:0.5rem 0;">Henüz kaydedilmiş aramanız yok. "+ Bu Filtreyi Kaydet" butonuna basarak hemen ekleyin.</div>';
             if (container) container.innerHTML = emptyHtml;
-            if (chipsContainer) chipsContainer.innerHTML = '<div style="font-size:0.78rem; color:var(--text-muted);">Henüz kaydedilmiş aramanız yok. Filtrelerinizi seçip "+ Yeni Filtre Kaydet" butonuna basın.</div>';
+            if (chipsContainer) chipsContainer.innerHTML = '<div style="font-size:0.78rem; color:var(--text-muted);">Henüz kaydedilmiş aramanız yok. Filtrelerinizi seçip "+ Bu Filtreyi Kaydet" butonuna basın.</div>';
+            if (topChipsContainer) topChipsContainer.innerHTML = '<div style="font-size:0.8rem; color:var(--text-muted); padding:0.2rem 0;">Henüz kaydedilmiş aramanız yok. Filtrelerinizi ayarladıktan sonra sağ üstteki <strong>"+ Bu Filtreyi Kaydet"</strong> butonuna basın.</div>';
             return;
         }
 
@@ -146,20 +148,20 @@ const appUI = (function () {
             container.innerHTML = html;
         }
 
-        // 2. Render Main Page Quick Chips Bar
-        if (chipsContainer) {
-            let chipsHtml = '';
-            savedSearches.forEach(item => {
-                chipsHtml += `
-                    <div style="display:inline-flex; align-items:center; gap:6px; background:rgba(245,158,11,0.12); border:1px solid #f59e0b; color:#b45309; padding:6px 14px; border-radius:20px; font-size:0.8rem; font-weight:700; cursor:pointer; transition:all 0.2s ease;" onclick="appUI.applySavedSearch(${item.id})">
-                        <i class="fa-solid fa-star" style="color:#f59e0b; font-size:0.72rem;"></i>
-                        <span>${escapeHtml(item.name)}</span>
-                        <span style="opacity:0.6; font-size:0.85rem; margin-left:4px; font-weight:800;" onclick="event.stopPropagation(); appUI.deleteSavedSearch(${item.id})" title="Sil">×</span>
-                    </div>
-                `;
-            });
-            chipsContainer.innerHTML = chipsHtml;
-        }
+        // 2. Render Main Page Chips Bars (Middle Column & Above Listings)
+        let chipsHtml = '';
+        savedSearches.forEach(item => {
+            chipsHtml += `
+                <div style="display:inline-flex; align-items:center; gap:6px; background:#fff; border:1.5px solid #f59e0b; color:#b45309; padding:7px 16px; border-radius:20px; font-size:0.82rem; font-weight:800; cursor:pointer; box-shadow:0 2px 8px rgba(245,158,11,0.15); transition:all 0.2s ease;" onclick="appUI.applySavedSearch(${item.id})">
+                    <i class="fa-solid fa-star" style="color:#f59e0b; font-size:0.78rem;"></i>
+                    <span>${escapeHtml(item.name)}</span>
+                    <span style="opacity:0.5; font-size:0.9rem; margin-left:4px; font-weight:800;" onclick="event.stopPropagation(); appUI.deleteSavedSearch(${item.id})" title="Sil">×</span>
+                </div>
+            `;
+        });
+
+        if (chipsContainer) chipsContainer.innerHTML = chipsHtml;
+        if (topChipsContainer) topChipsContainer.innerHTML = chipsHtml;
     }
 
     function openSaveFilterModal() {
