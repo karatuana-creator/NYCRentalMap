@@ -1413,13 +1413,13 @@ body {
 .detail-fullpage-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.65);
     backdrop-filter: blur(8px);
     z-index: 3000;
     display: none;
     align-items: center;
     justify-content: center;
-    padding: 2vh 2vw;
+    padding: 1.5rem;
 }
 
 .detail-fullpage-overlay.show {
@@ -1435,14 +1435,15 @@ body {
 .detail-fullpage-modal {
     background: var(--bg-card);
     width: 100%;
-    max-width: 960px;
-    max-height: 96vh;
-    border-radius: 20px;
+    max-width: 720px;
+    max-height: 85vh;
+    border-radius: 24px;
     overflow-y: auto;
     overflow-x: hidden;
     position: relative;
-    box-shadow: 0 25px 80px rgba(0,0,0,0.5);
-    animation: dfmSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 25px 70px rgba(0,0,0,0.45);
+    border: 1px solid var(--border-color);
+    animation: dfmSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes dfmSlideUp {
@@ -2234,11 +2235,21 @@ body {
         font-weight: 800 !important;
     }
 
-    /* Modal Full Height in Portrait */
+    /* Centered Modal Popup in Mobile Portrait */
+    .detail-fullpage-overlay {
+        padding: 1rem !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
     .detail-fullpage-modal {
-        width: 100vw !important;
-        height: 94vh !important;
-        border-radius: 20px 20px 0 0 !important;
+        width: 92vw !important;
+        max-width: 500px !important;
+        height: auto !important;
+        max-height: 82vh !important;
+        border-radius: 24px !important;
+        margin: auto !important;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.5) !important;
     }
 
     /* Bottom Nav Bar Touch Comfort */
