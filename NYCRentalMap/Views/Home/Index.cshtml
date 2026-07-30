@@ -354,6 +354,21 @@
                 </div>
             </div>
 
+            <!-- Kayıtlı Aramalarım Quick Bar (Sahibinden Style Saved Filters Chips Bar) -->
+            <div class="saved-searches-quick-bar" style="margin: 0.85rem 0 1.2rem 0; padding: 0.85rem 1rem; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 4px 14px rgba(0,0,0,0.03);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.65rem;">
+                    <div style="font-size:0.85rem; font-weight:800; color:var(--text-main); display:flex; align-items:center; gap:0.4rem;">
+                        <i class="fa-solid fa-star" style="color:#f59e0b;"></i> <span>Kayıtlı Aramalarım (Favori Filtrelerim)</span>
+                    </div>
+                    <button type="button" onclick="appUI.openSaveFilterModal()" style="background:none; border:none; color:#d97706; font-size:0.78rem; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:4px;">
+                        <i class="fa-solid fa-plus-circle"></i> + Yeni Filtre Kaydet
+                    </button>
+                </div>
+                <div id="savedSearchesChipsContainer" style="display:flex; flex-wrap:wrap; gap:0.5rem; align-items:center;">
+                    <!-- JS renders quick filter chips here -->
+                </div>
+            </div>
+
             <!-- 4x2 Grid (8 Ev) -->
             <div class="listings-grid" id="listingsGrid">
                 <div class="property-card" onclick="appUI.selectPropertyById(28611)">
