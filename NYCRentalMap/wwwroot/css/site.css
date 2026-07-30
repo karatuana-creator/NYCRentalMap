@@ -59,7 +59,7 @@
 html, body {
     width: 100%;
     max-width: 100vw;
-    overflow-x: hidden !important;
+    overflow-x: clip;
     position: relative;
 }
 
@@ -67,7 +67,7 @@ body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     background-color: var(--bg-main);
     color: var(--text-main);
-    overflow-x: hidden !important;
+    overflow-x: clip;
     line-height: 1.4;
     font-size: 13px;
 }
