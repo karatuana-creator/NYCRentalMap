@@ -54,6 +54,207 @@ const appUI = (function () {
         }
     }
 
+    // ── Saved Searches (Kayıtlı Aramalarım - Sahibinden Style) State & Storage ──
+    let savedSearches = [];
+
+    function loadSavedSearchesFromStorage() {
+        try {
+            const stored = localStorage.getItem('nyc_rental_saved_searches');
+            if (stored) {
+                savedSearches = JSON.parse(stored) || [];
+            } else {
+                savedSearches = [
+                    {
+                        id: 101,
+                        name: 'Bronx 2+ Misafir Evleri',
+                        boroughs: ['Bronx'],
+                        priceMax: 1000,
+                        roomTypes: ['Entire home/apt', 'Private room'],
+                        adults: 2, children: 0, babies: 0, pets: 0,
+                        keyword: '',
+                        dateStr: 'Örnek Kayıt'
+                    },
+                    {
+                        id: 102,
+                        name: 'Manhattan Daireleri (<$250)',
+                        boroughs: ['Manhattan'],
+                        priceMax: 250,
+                        roomTypes: ['Entire home/apt'],
+                        adults: 1, children: 0, babies: 0, pets: 0,
+                        keyword: '',
+                        dateStr: 'Örnek Kayıt'
+                    }
+                ];
+                saveSavedSearchesToStorage();
+            }
+        } catch (e) {
+            console.error('Saved searches loading error:', e);
+        }
+    }
+
+    function saveSavedSearchesToStorage() {
+        try {
+            localStorage.setItem('nyc_rental_saved_searches', JSON.stringify(savedSearches));
+        } catch (e) {
+            console.error('Saved searches saving error:', e);
+        }
+    }
+
+    function renderSavedSearches() {
+        const container = document.getElementById('savedFiltersListContainer');
+        const badge = document.getElementById('savedFiltersCountBadge');
+        if (badge) badge.textContent = `${savedSearches.length} Arama`;
+        if (!container) return;
+
+        if (savedSearches.length === 0) {
+            container.innerHTML = '<div style="font-size:0.78rem; color:var(--text-muted); text-align:center; padding:0.5rem 0;">Henüz kaydedilmiş aramanız yok. Üstteki butonla hemen ekleyebilirsiniz.</div>';
+            return;
+        }
+
+        let html = '<div style="display:flex; flex-direction:column; gap:0.55rem;">';
+        savedSearches.forEach(item => {
+            const boroughText = item.boroughs && item.boroughs.length > 0 ? item.boroughs.join(', ') : 'Tüm Bölgeler';
+            const guestCount = (item.adults || 0) + (item.children || 0);
+            
+            html += `
+                <div style="background:var(--bg-main, #f8fafc); border:1px solid var(--border-color, #e2e8f0); border-radius:12px; padding:0.65rem 0.85rem; display:flex; align-items:center; justify-content:space-between; gap:0.5rem; transition:all 0.2s ease;">
+                    <div style="flex:1; cursor:pointer;" onclick="appUI.applySavedSearch(${item.id})">
+                        <div style="font-weight:700; font-size:0.83rem; color:var(--text-main, #0f172a); margin-bottom:2px; display:flex; align-items:center; gap:0.35rem;">
+                            <i class="fa-solid fa-bookmark" style="color:#f59e0b; font-size:0.75rem;"></i>
+                            <span>${escapeHtml(item.name)}</span>
+                        </div>
+                        <div style="font-size:0.7rem; color:var(--text-muted, #64748b);">
+                            📍 ${escapeHtml(boroughText)} · 💵 Max $${item.priceMax} ${guestCount > 0 ? `· 👥 ${guestCount} Misafir` : ''}
+                        </div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:0.35rem;">
+                        <button type="button" onclick="appUI.applySavedSearch(${item.id})" style="background:#f59e0b; color:#fff; border:none; border-radius:8px; padding:4px 8px; font-size:0.72rem; font-weight:700; cursor:pointer;" title="Filtreyi Çalıştır">
+                            ⚡ Çalıştır
+                        </button>
+                        <button type="button" onclick="appUI.deleteSavedSearch(${item.id})" style="background:none; border:none; color:var(--text-muted); font-size:0.8rem; cursor:pointer; padding:4px;" title="Sil">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
+    function openSaveFilterModal() {
+        const modal = document.getElementById('saveFilterModalOverlay');
+        const input = document.getElementById('saveFilterNameInput');
+        if (!modal) return;
+
+        // Auto generate smart default filter title
+        let selectedBoroughs = [];
+        document.querySelectorAll('.chk-borough:checked').forEach(cb => selectedBoroughs.push(cb.value));
+        const boroughStr = selectedBoroughs.length > 0 ? selectedBoroughs.slice(0, 2).join(', ') : 'New York';
+        const priceVal = document.getElementById('priceRangeInput') ? document.getElementById('priceRangeInput').value : '1000';
+        const adults = parseInt(document.getElementById('cntAdults') ? document.getElementById('cntAdults').textContent : '0') || 0;
+
+        if (input) {
+            input.value = `${boroughStr} ${adults > 0 ? adults + ' Misafir ' : ''}($${priceVal})`;
+        }
+
+        modal.style.display = 'flex';
+        modal.classList.add('show');
+        if (input) setTimeout(() => input.focus(), 150);
+    }
+
+    function closeSaveFilterModal() {
+        const modal = document.getElementById('saveFilterModalOverlay');
+        if (modal) {
+            modal.style.display = 'none';
+            modal.classList.remove('show');
+        }
+    }
+
+    function confirmSaveFilter() {
+        const input = document.getElementById('saveFilterNameInput');
+        const name = input ? input.value.trim() : '';
+        if (!name) {
+            showToast('Lütfen aramanız için bir başlık girin!');
+            return;
+        }
+
+        let selectedBoroughs = [];
+        document.querySelectorAll('.chk-borough:checked').forEach(cb => selectedBoroughs.push(cb.value));
+        let selectedRooms = [];
+        document.querySelectorAll('.chk-room:checked').forEach(cb => selectedRooms.push(cb.value));
+
+        const priceMax = parseInt(document.getElementById('priceRangeInput') ? document.getElementById('priceRangeInput').value : '10000') || 10000;
+        const adults = parseInt(document.getElementById('cntAdults') ? document.getElementById('cntAdults').textContent : '0') || 0;
+        const children = parseInt(document.getElementById('cntChildren') ? document.getElementById('cntChildren').textContent : '0') || 0;
+        const babies = parseInt(document.getElementById('cntBabies') ? document.getElementById('cntBabies').textContent : '0') || 0;
+        const pets = parseInt(document.getElementById('cntPets') ? document.getElementById('cntPets').textContent : '0') || 0;
+        const keyword = document.getElementById('keywordInput') ? document.getElementById('keywordInput').value : '';
+
+        const newSearch = {
+            id: Date.now(),
+            name: name,
+            boroughs: selectedBoroughs,
+            priceMax: priceMax,
+            roomTypes: selectedRooms,
+            adults: adults,
+            children: children,
+            babies: babies,
+            pets: pets,
+            keyword: keyword,
+            dateStr: new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })
+        };
+
+        savedSearches.unshift(newSearch);
+        saveSavedSearchesToStorage();
+        renderSavedSearches();
+        closeSaveFilterModal();
+        showToast(`⭐ "${name}" Arama Filtrenize Kaydedildi!`);
+    }
+
+    function applySavedSearch(id) {
+        const item = savedSearches.find(s => s.id == id);
+        if (!item) return;
+
+        // Restore Boroughs Checkboxes
+        document.querySelectorAll('.chk-borough').forEach(cb => {
+            cb.checked = item.boroughs && item.boroughs.includes(cb.value);
+        });
+
+        // Restore Room Type Checkboxes
+        document.querySelectorAll('.chk-room').forEach(cb => {
+            cb.checked = item.roomTypes && item.roomTypes.includes(cb.value);
+        });
+
+        // Restore Price Range
+        const priceInput = document.getElementById('priceRangeInput');
+        if (priceInput && item.priceMax !== undefined) {
+            priceInput.value = item.priceMax;
+            updatePriceLabel(item.priceMax);
+        }
+
+        // Restore Guest Counts
+        if (item.adults !== undefined && document.getElementById('cntAdults')) document.getElementById('cntAdults').textContent = item.adults;
+        if (item.children !== undefined && document.getElementById('cntChildren')) document.getElementById('cntChildren').textContent = item.children;
+        if (item.babies !== undefined && document.getElementById('cntBabies')) document.getElementById('cntBabies').textContent = item.babies;
+        if (item.pets !== undefined && document.getElementById('cntPets')) document.getElementById('cntPets').textContent = item.pets;
+
+        // Restore Keyword
+        if (item.keyword !== undefined && document.getElementById('keywordInput')) document.getElementById('keywordInput').value = item.keyword;
+
+        // Trigger Data Fetch & Search
+        fetchData(1, true);
+        closeSidebarOnMobile();
+        showToast(`⚡ "${item.name}" Filtresi Çalıştırıldı!`);
+    }
+
+    function deleteSavedSearch(id) {
+        savedSearches = savedSearches.filter(s => s.id != id);
+        saveSavedSearchesToStorage();
+        renderSavedSearches();
+        showToast('Kayıtlı Arama Silindi 🗑️');
+    }
+
     function showToast(message) {
         let toast = document.getElementById('appToastNotice');
         if (!toast) {
@@ -507,7 +708,9 @@ const appUI = (function () {
         }
         loadFavoritesFromStorage();
         loadCompareFromStorage();
+        loadSavedSearchesFromStorage();
         syncFavoriteUI();
+        renderSavedSearches();
         initMap();
         initCharts();
         bindEvents();
@@ -2654,6 +2857,11 @@ const appUI = (function () {
         clearCompareList: clearCompareList,
         setActiveMobileNav: setActiveMobileNav,
         closeSidebarOnMobile: closeSidebarOnMobile,
+        openSaveFilterModal: openSaveFilterModal,
+        closeSaveFilterModal: closeSaveFilterModal,
+        confirmSaveFilter: confirmSaveFilter,
+        applySavedSearch: applySavedSearch,
+        deleteSavedSearch: deleteSavedSearch,
         clearFieldError: clearFieldError,
         updateGuestCount: updateGuestCount
     };

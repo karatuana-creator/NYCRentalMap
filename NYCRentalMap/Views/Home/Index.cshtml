@@ -161,6 +161,24 @@
 
             <!-- Submit Button -->
             <button type="button" class="btn-primary-coral w-100 btn-filter-submit" id="btnFilterSubmit" onclick="appUI.fetchData(1, true); appUI.closeSidebarOnMobile();"><i class="fa-solid fa-magnifying-glass"></i> Ara & Filtrele</button>
+
+            <!-- Save Filter Button (Sahibinden Style Saved Searches) -->
+            <button type="button" onclick="appUI.openSaveFilterModal()" style="width:100%; margin-top:0.6rem; padding:0.65rem; border-radius:12px; border:1px solid #f59e0b; background:rgba(245,158,11,0.08); color:#b45309; font-weight:700; font-size:0.82rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:0.45rem; transition:all 0.2s ease;">
+                <i class="fa-solid fa-bookmark" style="color:#f59e0b;"></i> Bu Filtreyi Kaydet (Favori Arama)
+            </button>
+        </div>
+
+        <!-- Widget: Kayıtlı Aramalarım (Sahibinden Style Saved Filters Widget) -->
+        <div class="saved-filters-widget-card" style="background: var(--bg-card); border-radius: 18px; padding: 1.1rem; border: 1px solid var(--border-color); box-shadow: 0 4px 16px rgba(0,0,0,0.04); margin-bottom: 1rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.85rem;">
+                <h4 style="margin:0; font-size:0.92rem; font-weight:800; display:flex; align-items:center; gap:0.45rem; color:var(--text-main);">
+                    <i class="fa-solid fa-star" style="color: #f59e0b;"></i> <span>Kayıtlı Aramalarım</span>
+                </h4>
+                <span id="savedFiltersCountBadge" style="font-size:0.7rem; font-weight:800; background:rgba(245,158,11,0.15); color:#d97706; padding:2px 8px; border-radius:12px;">0 Arama</span>
+            </div>
+            <div id="savedFiltersListContainer">
+                <div style="font-size:0.78rem; color:var(--text-muted); text-align:center; padding:0.5rem 0;">Henüz kaydedilmiş aramanız yok. Üstteki butonla hemen ekleyebilirsiniz.</div>
+            </div>
         </div>
 
         <!-- Widget: En Popüler Evler (Pro Card Version) -->
