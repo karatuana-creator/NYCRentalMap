@@ -1435,15 +1435,16 @@ body {
 .detail-fullpage-modal {
     background: var(--bg-card);
     width: 100%;
-    max-width: 720px;
-    max-height: 85vh;
+    max-width: 580px !important;
+    max-height: 75vh !important;
     border-radius: 24px;
     overflow-y: auto;
     overflow-x: hidden;
     position: relative;
-    box-shadow: 0 25px 70px rgba(0,0,0,0.45);
+    box-shadow: 0 25px 70px rgba(0,0,0,0.5);
     border: 1px solid var(--border-color);
-    animation: dfmSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    margin: auto !important;
+    animation: dfmSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes dfmSlideUp {
@@ -1501,22 +1502,22 @@ body {
 
 /* ── HERO SECTION ── */
 .dfm-hero {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    min-height: 380px;
+    display: flex;
+    flex-direction: column;
+    min-height: auto;
 }
 
 .dfm-hero-img {
     position: relative;
     overflow: hidden;
-    border-radius: 20px 0 0 0;
+    border-radius: 24px 24px 0 0;
 }
 
 .dfm-hero-img img {
     width: 100%;
-    height: 100%;
+    height: 200px !important;
+    min-height: 200px !important;
     object-fit: cover;
-    min-height: 380px;
 }
 
 .dfm-img-overlay {
@@ -2243,11 +2244,11 @@ body {
     }
 
     .detail-fullpage-modal {
-        width: 92vw !important;
-        max-width: 500px !important;
+        width: 86vw !important;
+        max-width: 440px !important;
         height: auto !important;
-        max-height: 82vh !important;
-        border-radius: 24px !important;
+        max-height: 70vh !important;
+        border-radius: 20px !important;
         margin: auto !important;
         box-shadow: 0 20px 60px rgba(0,0,0,0.5) !important;
     }
