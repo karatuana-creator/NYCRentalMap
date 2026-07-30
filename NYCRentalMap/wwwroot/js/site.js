@@ -448,6 +448,8 @@ const appUI = (function () {
         });
     }
 
+    var allMarkersRawData = [];
+
     function loadAllMapMarkers() {
         if (allMarkersLoaded || !map) return;
 
@@ -481,6 +483,7 @@ const appUI = (function () {
             .then(res => res.json())
             .then(data => {
                 if (!data || data.length === 0) return;
+                allMarkersRawData = data;
                 const markers = [];
                 data.forEach(item => {
                     let lat = Number(item.latitude ?? item.Latitude ?? 0);
@@ -1075,13 +1078,29 @@ const appUI = (function () {
 
 
     function selectPropertyById(id) {
-        console.log("currentListingsData:", currentListingsData);
-        console.log("Target ID:", id);
         const targetId = Number(id);
         let p = currentListingsData.find(x => Number(x.id) === targetId);
-        console.log("Found Property:", p);
+        if (!p && allMarkersRawData && allMarkersRawData.length) {
+            const raw = allMarkersRawData.find(x => Number(x.id ?? x.Id) === targetId);
+            if (raw) {
+                p = {
+                    id: targetId,
+                    name: raw.name ?? raw.Name ?? ('İlan #' + targetId),
+                    neighbourhood: raw.neighbourhood ?? raw.Neighbourhood ?? 'Manhattan',
+                    borough: raw.borough ?? raw.Borough ?? 'New York',
+                    roomType: raw.roomType ?? raw.RoomType ?? 'Entire home/apt',
+                    price: Number(raw.price ?? raw.Price ?? 120),
+                    latitude: Number(raw.latitude ?? raw.Latitude ?? 40.7128),
+                    longitude: Number(raw.longitude ?? raw.Longitude ?? -74.0060),
+                    beds: (targetId % 3) + 1,
+                    guests: (targetId % 4) + 2,
+                    rating: Math.round((4.5 + ((targetId % 45) / 100.0)) * 100) / 100,
+                    reviews: (targetId % 150) + 10,
+                    imageUrl: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=600&q=80'
+                };
+            }
+        }
         if (!p) {
-            // Fallback for static elements or dynamic IDs
             p = {
                 id: targetId,
                 name: 'Harika Konumda Lüks Daire #' + targetId,
@@ -1092,7 +1111,7 @@ const appUI = (function () {
                 roomType: 'Entire home/apt',
                 rating: 4.85,
                 reviews: 110,
-                price: 10,
+                price: 120,
                 imageUrl: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=600&q=80'
             };
         }
