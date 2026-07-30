@@ -928,11 +928,13 @@ const appUI = (function () {
             const isFav = favoriteIds.has(item.id);
             const favClass = isFav ? 'active' : '';
             const heartIcon = isFav ? 'fa-solid fa-heart' : 'fa-regular fa-heart';
+            const imgUrl = item.imageUrl || getSampleImageForId(item.id);
 
             html += `
-                <div class="property-card no-img-card" onclick="appUI.selectPropertyById(${item.id})">
-                    <div class="card-text-header">
-                        <div class="card-price-badge-inline">$${item.price} <small>/ gece</small></div>
+                <div class="property-card" onclick="appUI.selectPropertyById(${item.id})">
+                    <div class="card-img-wrap">
+                        <img src="${imgUrl}" alt="${escapeHtml(item.name)}" loading="lazy" />
+                        <div class="card-price-badge">$${item.price} <small>/ gece</small></div>
                         <button class="fav-btn ${favClass}" onclick="event.stopPropagation(); appUI.toggleFavorite(${item.id}, this)">
                             <i class="${heartIcon}"></i>
                         </button>
