@@ -1971,6 +1971,10 @@ const appUI = (function () {
                     map.invalidateSize();
                 }
             }, 300);
+    function closeSidebarOnMobile() {
+        const grid = document.querySelector('.dashboard-grid');
+        if (grid && !grid.classList.contains('sidebar-hidden') && window.innerWidth <= 768) {
+            grid.classList.add('sidebar-hidden');
         }
     }
 
@@ -2647,6 +2651,7 @@ const appUI = (function () {
         removeFromCompare: removeFromCompare,
         clearCompareList: clearCompareList,
         setActiveMobileNav: setActiveMobileNav,
+        closeSidebarOnMobile: closeSidebarOnMobile,
         clearFieldError: clearFieldError,
         updateGuestCount: updateGuestCount
     };

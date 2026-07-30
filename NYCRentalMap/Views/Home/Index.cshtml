@@ -5,11 +5,16 @@
 <div class="dashboard-grid sidebar-hidden" id="dashboardGrid">
 
     <!-- 1. LEFT SIDEBAR: FILTERS & POPULAR WIDGET -->
-    <aside class="sidebar-panel">
+    <aside class="sidebar-panel" onclick="if(event.target===this) appUI.toggleSidebarPanel()">
         <div class="filter-card">
             <div class="filter-header">
                 <h3>Filtreler</h3>
-                <button type="button" class="btn-text-danger" id="btnClearAllFilters" onclick="appUI.clearFilters()">Temizle</button>
+                <div style="display:flex; align-items:center; gap:0.5rem;">
+                    <button type="button" class="btn-text-danger" id="btnClearAllFilters" onclick="appUI.clearFilters()">Temizle</button>
+                    <button type="button" class="mobile-filter-close-btn" onclick="appUI.toggleSidebarPanel()" title="Filtreleri Kapat">
+                        <i class="fa-solid fa-xmark"></i> Kapat
+                    </button>
+                </div>
             </div>
 
             <!-- Price Range -->
@@ -155,7 +160,7 @@
             </div>
 
             <!-- Submit Button -->
-            <button type="button" class="btn-primary-coral w-100 btn-filter-submit" id="btnFilterSubmit" onclick="appUI.fetchData(1, true)"><i class="fa-solid fa-magnifying-glass"></i> Ara & Filtrele</button>
+            <button type="button" class="btn-primary-coral w-100 btn-filter-submit" id="btnFilterSubmit" onclick="appUI.fetchData(1, true); appUI.closeSidebarOnMobile();"><i class="fa-solid fa-magnifying-glass"></i> Ara & Filtrele</button>
         </div>
 
         <!-- Widget: En Popüler Evler (Pro Card Version) -->
