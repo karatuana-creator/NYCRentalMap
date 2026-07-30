@@ -1549,6 +1549,50 @@ body {
 .dfm-fav-btn.active { color: #ef4444; }
 .dfm-fav-btn.active i { font-weight: 900; }
 
+.dfm-compare-action-btn {
+    padding: 0.7rem 1.1rem;
+    background: rgba(99,102,241,0.1);
+    color: #6366f1;
+    border: 1px solid rgba(99,102,241,0.3);
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s, color 0.2s, transform 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.dfm-compare-action-btn:hover {
+    background: #6366f1;
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.btn-card-compare {
+    width: 100%;
+    margin-top: 0.5rem;
+    padding: 0.4rem;
+    background: rgba(99, 102, 241, 0.08);
+    color: #6366f1;
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    border-radius: 8px;
+    font-size: 0.76rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, transform 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+}
+.btn-card-compare:hover {
+    background: #6366f1;
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
 /* ── HERO INFO ── */
 .dfm-hero-info {
     padding: 1.5rem 1.6rem;

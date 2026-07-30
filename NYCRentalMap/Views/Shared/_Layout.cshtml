@@ -250,9 +250,14 @@
                             </div>
                         </div>
 
-                        <button class="dfm-reserve-btn" onclick="appUI.openBookingModal()">
-                            <i class="fa-solid fa-calendar-check"></i> Hemen Rezerve Et
-                        </button>
+                        <div style="display:flex; gap:0.5rem; margin-top:0.4rem;">
+                            <button class="dfm-reserve-btn" onclick="appUI.openBookingModal()" style="flex:1;">
+                                <i class="fa-solid fa-calendar-check"></i> Hemen Rezerve Et
+                            </button>
+                            <button class="dfm-compare-action-btn" onclick="appUI.addToCompare(activeProperty ? activeProperty.id : 0)" type="button" title="Karşılaştırma Listesine Ekle">
+                                <i class="fa-solid fa-code-compare"></i> Karşılaştır
+                            </button>
+                        </div>
                     </div>
                 </div>
 

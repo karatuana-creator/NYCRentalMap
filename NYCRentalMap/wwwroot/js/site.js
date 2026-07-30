@@ -21,8 +21,91 @@ const appUI = (function () {
     // Favorites Array & Persistence
     let favoriteIds = new Set(); // Stores user favourited property IDs
     let favoriteItemsMap = {};   // Stores property details for offline/page-refresh persistence
+
+    // Dedicated Compare Array & Persistence (Independent of Favorites)
+    let compareIds = new Set();
+    let compareItemsMap = {};
+
     let currentListingsData = [];
     let activeProperty = null;
+
+    function loadCompareFromStorage() {
+        try {
+            const storedIds = localStorage.getItem('nyc_rental_compare_ids');
+            const storedItems = localStorage.getItem('nyc_rental_compare_items');
+            if (storedIds) {
+                const parsed = JSON.parse(storedIds);
+                if (Array.isArray(parsed)) compareIds = new Set(parsed.map(Number));
+            }
+            if (storedItems) {
+                compareItemsMap = JSON.parse(storedItems) || {};
+            }
+        } catch (e) {
+            console.error('Compare loading error:', e);
+        }
+    }
+
+    function saveCompareToStorage() {
+        try {
+            localStorage.setItem('nyc_rental_compare_ids', JSON.stringify(Array.from(compareIds)));
+            localStorage.setItem('nyc_rental_compare_items', JSON.stringify(compareItemsMap));
+        } catch (e) {
+            console.error('Compare saving error:', e);
+        }
+    }
+
+    function addToCompare(id, event) {
+        if (event) event.stopPropagation();
+        const numId = Number(id);
+        if (!numId) return;
+
+        if (compareIds.size >= 4 && !compareIds.has(numId)) {
+            alert('En fazla 4 evi aynı anda karşılaştırabilirsiniz.');
+            return;
+        }
+
+        compareIds.add(numId);
+
+        let foundItem = currentListingsData.find(x => Number(x.id) === numId) ||
+                        (activeProperty && Number(activeProperty.id) === numId ? activeProperty : null) ||
+                        (allMarkersRawData && allMarkersRawData.find(x => Number(x.id ?? x.Id) === numId));
+
+        if (!foundItem) {
+            foundItem = {
+                id: numId,
+                name: 'İlan #' + numId,
+                neighbourhood: 'Manhattan',
+                borough: 'New York',
+                roomType: 'Entire home/apt',
+                price: 120,
+                rating: 4.85,
+                reviews: 45,
+                minNights: 1,
+                imageUrl: getSampleImageForId(numId)
+            };
+        }
+
+        compareItemsMap[numId] = foundItem;
+        saveCompareToStorage();
+        renderComparePage();
+        switchTab('compare');
+    }
+
+    function removeFromCompare(id, event) {
+        if (event) event.stopPropagation();
+        const numId = Number(id);
+        compareIds.delete(numId);
+        delete compareItemsMap[numId];
+        saveCompareToStorage();
+        renderComparePage();
+    }
+
+    function clearCompareList() {
+        compareIds.clear();
+        compareItemsMap = {};
+        saveCompareToStorage();
+        renderComparePage();
+    }
 
     function loadFavoritesFromStorage() {
         try {
@@ -196,24 +279,26 @@ const appUI = (function () {
         if (!wrapper) return;
 
         let compareProps = [];
-        if (favoriteIds.size > 0) {
-            favoriteIds.forEach(id => {
-                const item = currentListingsData.find(x => Number(x.id) === Number(id));
+        if (compareIds.size > 0) {
+            compareIds.forEach(id => {
+                const item = compareItemsMap[id] ||
+                             currentListingsData.find(x => Number(x.id) === Number(id)) ||
+                             (allMarkersRawData && allMarkersRawData.find(x => Number(x.id ?? x.Id) === Number(id)));
                 if (item) compareProps.push(item);
             });
         }
 
-        // If user has no favorites yet, pick top 3 listings to present a rich comparison table
-        if (compareProps.length < 2 && currentListingsData.length >= 2) {
-            compareProps = currentListingsData.slice(0, 3);
-        }
-
         if (compareProps.length === 0) {
             wrapper.innerHTML = `
-                <div style="text-align:center; padding:3rem; background:#f8fafc; border-radius:16px;">
-                    <i class="fa-solid fa-code-compare" style="font-size:3rem; color:#94a3b8; margin-bottom:1rem;"></i>
-                    <h4 style="font-size:1.1rem; font-weight:700; color:#1e293b;">Karşılaştırılacak Ev Bulunamadı</h4>
-                    <p style="color:#64748b; font-size:0.88rem;">Lütfen ana sayfadan ev seçin veya favorilerinize ekleyin.</p>
+                <div style="text-align:center; padding:3.5rem 1.5rem; background:var(--bg-main, #f8fafc); border-radius:16px; border:1px solid var(--border-color, #e2e8f0);">
+                    <i class="fa-solid fa-code-compare" style="font-size:3rem; color:#6366f1; margin-bottom:1rem; opacity:0.85;"></i>
+                    <h4 style="font-size:1.15rem; font-weight:800; color:var(--text-main, #1e293b); margin-bottom:0.5rem;">Karşılaştırma Listesi Boş</h4>
+                    <p style="color:var(--text-muted, #64748b); font-size:0.88rem; max-width:440px; margin:0 auto 1.5rem auto; line-height:1.5;">
+                        Ana sayfadaki ilan kartlarının altında bulunan <strong>[+ Karşılaştır]</strong> butonuna tıklayarak beğendiğiniz evleri buraya ekleyebilirsiniz.
+                    </p>
+                    <button type="button" class="btn-primary-coral" onclick="appUI.switchTab('home')" style="padding:0.75rem 1.6rem; font-weight:700; border-radius:12px; font-size:0.9rem;">
+                        <i class="fa-solid fa-house"></i> Ana Sayfadan Ev Seç
+                    </button>
                 </div>
             `;
             return;
@@ -223,15 +308,19 @@ const appUI = (function () {
             <table style="width:100%; border-collapse:separate; border-spacing:1rem 0; min-width:750px;">
                 <thead>
                     <tr>
-                        <th style="width:180px; padding:1rem; text-align:left; background:#f8fafc; border-radius:12px; font-size:0.9rem; color:#64748b;">Özellikler</th>
+                        <th style="width:180px; padding:1rem; text-align:left; background:var(--bg-main, #f8fafc); border-radius:12px; font-size:0.9rem; color:var(--text-muted, #64748b);">Özellikler</th>
         `;
 
         compareProps.forEach(p => {
+            const img = p.imageUrl || getSampleImageForId(p.id);
             html += `
-                <th style="padding:1rem; background:#f8fafc; border-radius:16px 16px 0 0; text-align:center; vertical-align:top; width:260px;">
-                    <img src="${p.imageUrl || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=400&q=80'}" style="width:100%; height:130px; object-fit:cover; border-radius:12px; margin-bottom:0.75rem;" />
-                    <h4 style="font-size:0.95rem; font-weight:800; color:#0f172a; margin:0 0 0.25rem 0; line-height:1.3; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">${escapeHtml(p.name)}</h4>
-                    <span style="font-size:0.75rem; color:#64748b;">📍 ${escapeHtml(p.neighbourhood || 'New York')}, ${escapeHtml(p.borough || 'Manhattan')}</span>
+                <th style="padding:1rem; background:var(--bg-main, #f8fafc); border-radius:16px 16px 0 0; text-align:center; vertical-align:top; width:260px; position:relative;">
+                    <button onclick="appUI.removeFromCompare(${p.id}, event)" style="position:absolute; top:12px; right:12px; border:none; background:rgba(0,0,0,0.5); color:#ffffff; width:26px; height:26px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:0.8rem; transition:background 0.2s;" title="Kaldır">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                    <img src="${img}" style="width:100%; height:130px; object-fit:cover; border-radius:12px; margin-bottom:0.75rem;" />
+                    <h4 style="font-size:0.95rem; font-weight:800; color:var(--text-main, #0f172a); margin:0 0 0.25rem 0; line-height:1.3; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">${escapeHtml(p.name || '')}</h4>
+                    <span style="font-size:0.75rem; color:var(--text-muted, #64748b);">📍 ${escapeHtml(p.neighbourhood || 'New York')}, ${escapeHtml(p.borough || 'Manhattan')}</span>
                 </th>
             `;
         });
@@ -242,40 +331,40 @@ const appUI = (function () {
                 <tbody>
                     <!-- Row 1: Price -->
                     <tr>
-                        <td style="padding:1rem; font-weight:700; color:#334155; border-bottom:1px solid #e2e8f0;"><i class="fa-solid fa-tag" style="color:#e11d48; margin-right:6px;"></i> Gecelik Fiyat</td>
+                        <td style="padding:1rem; font-weight:700; color:var(--text-main, #334155); border-bottom:1px solid var(--border-color, #e2e8f0);"><i class="fa-solid fa-tag" style="color:#e11d48; margin-right:6px;"></i> Gecelik Fiyat</td>
         `;
         compareProps.forEach(p => {
-            html += `<td style="padding:1rem; text-align:center; font-weight:800; font-size:1.1rem; color:#e11d48; border-bottom:1px solid #e2e8f0; background:#fff;">$${p.price || 120} <small style="font-weight:400; color:#64748b; font-size:0.75rem;">/gece</small></td>`;
+            html += `<td style="padding:1rem; text-align:center; font-weight:800; font-size:1.1rem; color:#e11d48; border-bottom:1px solid var(--border-color, #e2e8f0); background:var(--bg-card, #fff);">$${p.price || 120} <small style="font-weight:400; color:var(--text-muted, #64748b); font-size:0.75rem;">/gece</small></td>`;
         });
 
         html += `
                     </tr>
                     <!-- Row 2: Room Type -->
                     <tr>
-                        <td style="padding:1rem; font-weight:700; color:#334155; border-bottom:1px solid #e2e8f0;"><i class="fa-solid fa-house" style="color:#6366f1; margin-right:6px;"></i> Oda Tipi</td>
+                        <td style="padding:1rem; font-weight:700; color:var(--text-main, #334155); border-bottom:1px solid var(--border-color, #e2e8f0);"><i class="fa-solid fa-house" style="color:#6366f1; margin-right:6px;"></i> Oda Tipi</td>
         `;
         compareProps.forEach(p => {
-            html += `<td style="padding:1rem; text-align:center; font-weight:700; font-size:0.88rem; color:#1e293b; border-bottom:1px solid #e2e8f0; background:#fff;">${escapeHtml(p.roomType || 'Tüm Ev')}</td>`;
+            html += `<td style="padding:1rem; text-align:center; font-weight:700; font-size:0.88rem; color:var(--text-main, #1e293b); border-bottom:1px solid var(--border-color, #e2e8f0); background:var(--bg-card, #fff);">${escapeHtml(p.roomType || 'Tüm Ev')}</td>`;
         });
 
         html += `
                     </tr>
                     <!-- Row 3: Rating -->
                     <tr>
-                        <td style="padding:1rem; font-weight:700; color:#334155; border-bottom:1px solid #e2e8f0;"><i class="fa-solid fa-star" style="color:#f59e0b; margin-right:6px;"></i> Müşteri Puanı</td>
+                        <td style="padding:1rem; font-weight:700; color:var(--text-main, #334155); border-bottom:1px solid var(--border-color, #e2e8f0);"><i class="fa-solid fa-star" style="color:#f59e0b; margin-right:6px;"></i> Müşteri Puanı</td>
         `;
         compareProps.forEach(p => {
-            html += `<td style="padding:1rem; text-align:center; font-weight:700; font-size:0.88rem; color:#1e293b; border-bottom:1px solid #e2e8f0; background:#fff;"><i class="fa-solid fa-star" style="color:#f59e0b;"></i> ${p.rating || 4.85} <small style="color:#64748b;">(${p.reviews || 45} yorum)</small></td>`;
+            html += `<td style="padding:1rem; text-align:center; font-weight:700; font-size:0.88rem; color:var(--text-main, #1e293b); border-bottom:1px solid var(--border-color, #e2e8f0); background:var(--bg-card, #fff);"><i class="fa-solid fa-star" style="color:#f59e0b;"></i> ${p.rating || 4.85} <small style="color:var(--text-muted, #64748b);">(${p.reviews || 45} yorum)</small></td>`;
         });
 
         html += `
                     </tr>
                     <!-- Row 4: Minimum Nights -->
                     <tr>
-                        <td style="padding:1rem; font-weight:700; color:#334155; border-bottom:1px solid #e2e8f0;"><i class="fa-solid fa-moon" style="color:#38bdf8; margin-right:6px;"></i> Min. Konaklama</td>
+                        <td style="padding:1rem; font-weight:700; color:var(--text-main, #334155); border-bottom:1px solid var(--border-color, #e2e8f0);"><i class="fa-solid fa-moon" style="color:#38bdf8; margin-right:6px;"></i> Min. Konaklama</td>
         `;
         compareProps.forEach(p => {
-            html += `<td style="padding:1rem; text-align:center; font-weight:700; font-size:0.88rem; color:#1e293b; border-bottom:1px solid #e2e8f0; background:#fff;">${p.minNights || 1} Gece</td>`;
+            html += `<td style="padding:1rem; text-align:center; font-weight:700; font-size:0.88rem; color:var(--text-main, #1e293b); border-bottom:1px solid var(--border-color, #e2e8f0); background:var(--bg-card, #fff);">${p.minNights || 1} Gece</td>`;
         });
 
         html += `
@@ -286,7 +375,7 @@ const appUI = (function () {
         `;
         compareProps.forEach(p => {
             html += `
-                <td style="padding:1.25rem 1rem; text-align:center; background:#f8fafc; border-radius:0 0 16px 16px;">
+                <td style="padding:1.25rem 1rem; text-align:center; background:var(--bg-main, #f8fafc); border-radius:0 0 16px 16px;">
                     <button type="button" class="btn-primary-coral" onclick="appUI.selectPropertyById(${p.id})" style="width:100%; padding:0.65rem; font-weight:700; border-radius:10px; font-size:0.85rem;">
                         İncele & Rezerve Et
                     </button>
@@ -298,6 +387,22 @@ const appUI = (function () {
                     </tr>
                 </tbody>
             </table>
+
+            <!-- Bottom Action Banner for Adding More Listings -->
+            <div style="margin-top:1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; padding:1.2rem 1.5rem; background:var(--bg-main, #f8fafc); border-radius:16px; border:1px solid var(--border-color, #e2e8f0);">
+                <div>
+                    <h5 style="margin:0 0 4px 0; font-weight:800; color:var(--text-main, #0f172a); font-size:0.95rem;">Daha Fazla İlan Karşılaştır</h5>
+                    <p style="margin:0; font-size:0.82rem; color:var(--text-muted, #64748b);">Ana sayfadaki ilan kartlarının altında bulunan [+ Karşılaştır] butonuna tıklayarak yeni evler ekleyin.</p>
+                </div>
+                <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">
+                    <button type="button" class="btn-primary-coral" onclick="appUI.switchTab('home')" style="padding:0.65rem 1.3rem; font-weight:700; border-radius:10px; font-size:0.85rem;">
+                        <i class="fa-solid fa-plus-circle"></i> Ana Sayfadan Ev Seç (İlan Ekle)
+                    </button>
+                    <button type="button" onclick="appUI.clearCompareList()" style="background:none; border:1px solid var(--border-color, #cbd5e1); color:var(--text-muted, #64748b); padding:0.65rem 1rem; border-radius:10px; font-size:0.82rem; cursor:pointer;">
+                        <i class="fa-solid fa-trash-can"></i> Listeyi Temizle
+                    </button>
+                </div>
+            </div>
         `;
 
         wrapper.innerHTML = html;
@@ -362,6 +467,7 @@ const appUI = (function () {
     // ── Document Ready Handler ──
     document.addEventListener("DOMContentLoaded", function () {
         loadFavoritesFromStorage();
+        loadCompareFromStorage();
         syncFavoriteUI();
         initMap();
         initCharts();
@@ -950,6 +1056,9 @@ const appUI = (function () {
                             <i class="fa-solid fa-star icon-star"></i> ${item.rating} <span style="font-weight:400; color:var(--text-muted);">(${item.reviews} yorum)</span>
                             <span class="min-nights-badge">🌙 Min. ${item.minNights} Gece</span>
                         </div>
+                        <button class="btn-card-compare" onclick="event.stopPropagation(); appUI.addToCompare(${item.id})" type="button">
+                            <i class="fa-solid fa-code-compare"></i> Karşılaştır
+                        </button>
                     </div>
                 </div>
             `;
@@ -2481,6 +2590,9 @@ const appUI = (function () {
         sendAiDropPrompt: sendAiDropPrompt,
         resetAiDropdown: resetAiDropdown,
         renderComparePage: renderComparePage,
+        addToCompare: addToCompare,
+        removeFromCompare: removeFromCompare,
+        clearCompareList: clearCompareList,
         clearFieldError: clearFieldError,
         updateGuestCount: updateGuestCount
     };
