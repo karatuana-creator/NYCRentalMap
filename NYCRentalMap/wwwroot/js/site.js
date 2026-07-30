@@ -62,7 +62,8 @@ const appUI = (function () {
             const stored = localStorage.getItem('nyc_rental_saved_searches');
             if (stored) {
                 savedSearches = JSON.parse(stored) || [];
-            } else {
+            }
+            if (!savedSearches || savedSearches.length === 0) {
                 savedSearches = [
                     {
                         id: 101,
