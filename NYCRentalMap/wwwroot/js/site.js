@@ -102,6 +102,7 @@ const appUI = (function () {
 
     function renderSavedSearches() {
         const container = document.getElementById('savedFiltersListContainer');
+        const modalContainer = document.getElementById('savedFiltersModalListContainer');
         const chipsContainer = document.getElementById('savedSearchesChipsContainer');
         const topChipsContainer = document.getElementById('topSavedSearchesChipsContainer');
         const badge = document.getElementById('savedFiltersCountBadge');
@@ -110,43 +111,44 @@ const appUI = (function () {
         if (savedSearches.length === 0) {
             const emptyHtml = '<div style="font-size:0.78rem; color:var(--text-muted); text-align:center; padding:0.5rem 0;">Henüz kaydedilmiş aramanız yok. "+ Bu Filtreyi Kaydet" butonuna basarak hemen ekleyin.</div>';
             if (container) container.innerHTML = emptyHtml;
+            if (modalContainer) modalContainer.innerHTML = '<div style="font-size:0.78rem; color:var(--text-muted); text-align:center; padding:0.5rem 0;">Henüz kaydedilmiş aramanız yok.</div>';
             if (chipsContainer) chipsContainer.innerHTML = '<div style="font-size:0.78rem; color:var(--text-muted);">Henüz kaydedilmiş aramanız yok. Filtrelerinizi seçip "+ Bu Filtreyi Kaydet" butonuna basın.</div>';
             if (topChipsContainer) topChipsContainer.innerHTML = '<div style="font-size:0.8rem; color:var(--text-muted); padding:0.2rem 0;">Henüz kaydedilmiş aramanız yok. Filtrelerinizi ayarladıktan sonra sağ üstteki <strong>"+ Bu Filtreyi Kaydet"</strong> butonuna basın.</div>';
             return;
         }
 
-        // 1. Render Sidebar Widget
-        if (container) {
-            let html = '<div style="display:flex; flex-direction:column; gap:0.55rem;">';
-            savedSearches.forEach(item => {
-                const boroughText = item.boroughs && item.boroughs.length > 0 ? item.boroughs.join(', ') : 'Tüm Bölgeler';
-                const guestCount = (item.adults || 0) + (item.children || 0);
-                
-                html += `
-                    <div style="background:var(--bg-main, #f8fafc); border:1px solid var(--border-color, #e2e8f0); border-radius:12px; padding:0.65rem 0.85rem; display:flex; align-items:center; justify-content:space-between; gap:0.5rem; transition:all 0.2s ease;">
-                        <div style="flex:1; cursor:pointer;" onclick="appUI.applySavedSearch(${item.id})">
-                            <div style="font-weight:700; font-size:0.83rem; color:var(--text-main, #0f172a); margin-bottom:2px; display:flex; align-items:center; gap:0.35rem;">
-                                <i class="fa-solid fa-bookmark" style="color:#f59e0b; font-size:0.75rem;"></i>
-                                <span>${escapeHtml(item.name)}</span>
-                            </div>
-                            <div style="font-size:0.7rem; color:var(--text-muted, #64748b);">
-                                📍 ${escapeHtml(boroughText)} · 💵 Max $${item.priceMax} ${guestCount > 0 ? `· 👥 ${guestCount} Misafir` : ''}
-                            </div>
+        // 1. Render Sidebar & Modal Lists
+        let html = '<div style="display:flex; flex-direction:column; gap:0.55rem;">';
+        savedSearches.forEach(item => {
+            const boroughText = item.boroughs && item.boroughs.length > 0 ? item.boroughs.join(', ') : 'Tüm Bölgeler';
+            const guestCount = (item.adults || 0) + (item.children || 0);
+            
+            html += `
+                <div style="background:var(--bg-main, #f8fafc); border:1px solid var(--border-color, #e2e8f0); border-radius:12px; padding:0.65rem 0.85rem; display:flex; align-items:center; justify-content:space-between; gap:0.5rem; transition:all 0.2s ease;">
+                    <div style="flex:1; cursor:pointer;" onclick="appUI.applySavedSearch(${item.id})">
+                        <div style="font-weight:700; font-size:0.83rem; color:var(--text-main, #0f172a); margin-bottom:2px; display:flex; align-items:center; gap:0.35rem;">
+                            <i class="fa-solid fa-bookmark" style="color:#f59e0b; font-size:0.75rem;"></i>
+                            <span>${escapeHtml(item.name)}</span>
                         </div>
-                        <div style="display:flex; align-items:center; gap:0.35rem;">
-                            <button type="button" onclick="appUI.applySavedSearch(${item.id})" style="background:#f59e0b; color:#fff; border:none; border-radius:8px; padding:4px 8px; font-size:0.72rem; font-weight:700; cursor:pointer;" title="Filtreyi Çalıştır">
-                                ⚡ Çalıştır
-                            </button>
-                            <button type="button" onclick="appUI.deleteSavedSearch(${item.id})" style="background:none; border:none; color:var(--text-muted); font-size:0.8rem; cursor:pointer; padding:4px;" title="Sil">
-                                <i class="fa-solid fa-trash-can"></i>
-                            </button>
+                        <div style="font-size:0.7rem; color:var(--text-muted, #64748b);">
+                            📍 ${escapeHtml(boroughText)} · 💵 Max $${item.priceMax} ${guestCount > 0 ? `· 👥 ${guestCount} Misafir` : ''}
                         </div>
                     </div>
-                `;
-            });
-            html += '</div>';
-            container.innerHTML = html;
-        }
+                    <div style="display:flex; align-items:center; gap:0.35rem;">
+                        <button type="button" onclick="appUI.applySavedSearch(${item.id})" style="background:#f59e0b; color:#fff; border:none; border-radius:8px; padding:5px 10px; font-size:0.72rem; font-weight:700; cursor:pointer;" title="Filtreyi Çalıştır">
+                            ⚡ Çalıştır
+                        </button>
+                        <button type="button" onclick="appUI.deleteSavedSearch(${item.id})" style="background:none; border:none; color:var(--text-muted); font-size:0.8rem; cursor:pointer; padding:4px;" title="Sil">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+
+        if (container) container.innerHTML = html;
+        if (modalContainer) modalContainer.innerHTML = html;
 
         // 2. Render Main Page Chips Bars (Middle Column & Above Listings)
         let chipsHtml = '';

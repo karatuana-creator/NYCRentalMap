@@ -45,6 +45,9 @@
                 <a class="nav-item filter-toggle-nav-btn" href="javascript:void(0)" onclick="appUI.toggleSidebarPanel()">
                     <i class="fa-solid fa-sliders"></i> Filtreler
                 </a>
+                <a class="nav-item" href="javascript:void(0)" onclick="appUI.openSaveFilterModal()" style="color:#d97706; font-weight:700;">
+                    <i class="fa-solid fa-star" style="color:#f59e0b;"></i> Kayıtlı Aramalarım
+                </a>
                 <a class="nav-item" href="javascript:void(0)" onclick="appUI.switchTab('map')">Harita</a>
                 <a class="nav-item" href="javascript:void(0)" onclick="appUI.switchTab('explore')">Keşfet</a>
                 <a class="nav-item" href="javascript:void(0)" onclick="appUI.switchTab('statistics')">İstatistikler</a>
@@ -191,27 +194,43 @@
         </div>
     <!-- Save Filter Modal Overlay (Sahibinden Style Saved Searches) -->
     <div class="detail-fullpage-overlay" id="saveFilterModalOverlay" style="display:none; z-index:9500;" onclick="if(event.target===this) appUI.closeSaveFilterModal()">
-        <div style="background:var(--bg-card); width:100%; max-width:440px; border-radius:24px; padding:1.5rem; border:1px solid var(--border-color); box-shadow:0 25px 70px rgba(0,0,0,0.5); margin:auto; animation:dfmSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+        <div style="background:var(--bg-card); width:100%; max-width:480px; border-radius:24px; padding:1.5rem; border:1px solid var(--border-color); box-shadow:0 25px 70px rgba(0,0,0,0.5); margin:auto; animation:dfmSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
                 <h3 style="margin:0; font-size:1.15rem; font-weight:800; color:var(--text-main); display:flex; align-items:center; gap:0.5rem;">
-                    <i class="fa-solid fa-bookmark" style="color:#f59e0b;"></i> Aramayı Kaydet (Favori Filtre)
+                    <i class="fa-solid fa-star" style="color:#f59e0b;"></i> Kayıtlı Aramalarım & Filtreler
                 </h3>
                 <button type="button" onclick="appUI.closeSaveFilterModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <p style="font-size:0.83rem; color:var(--text-muted); margin-bottom:1.1rem; line-height:1.45;">
-                Şu anki filtrenizi (Bölge, Fiyat, Oda Tipi, Misafir Sayısı vb.) bir isim vererek kaydedin. Dilediğiniz zaman tek tıkla tekrar uygulayın!
-            </p>
 
-            <div style="margin-bottom:1.2rem;">
-                <label style="font-size:0.82rem; font-weight:700; color:var(--text-main); display:block; margin-bottom:0.4rem;">Arama / Filtre Adı</label>
-                <input type="text" id="saveFilterNameInput" class="custom-input" placeholder="Örn: 2 Kişilik Bronx Evleri" style="width:100%; box-sizing:border-box; padding:0.7rem;" onkeyup="if(event.key==='Enter') appUI.confirmSaveFilter()" />
+            <!-- Existing Saved Filters Section -->
+            <div style="margin-bottom:1.25rem;">
+                <h5 style="margin:0 0 0.5rem 0; font-size:0.82rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">Mevcut Kayıtlı Aramalarınız</h5>
+                <div id="savedFiltersModalListContainer" style="max-height:180px; overflow-y:auto; padding-right:4px;">
+                    <!-- JS populates saved searches list here -->
+                </div>
             </div>
 
-            <div style="display:flex; gap:0.6rem; justify-content:flex-end;">
-                <button type="button" onclick="appUI.closeSaveFilterModal()" style="padding:0.65rem 1.1rem; border-radius:10px; border:1px solid var(--border-color); background:none; color:var(--text-muted); font-weight:600; cursor:pointer;">Vazgeç</button>
-                <button type="button" class="btn-primary-coral" onclick="appUI.confirmSaveFilter()" style="padding:0.65rem 1.4rem; font-weight:700; border-radius:10px;">
-                    <i class="fa-solid fa-floppy-disk"></i> Kaydet
-                </button>
+            <hr style="border:none; border-top:1px solid var(--border-color); margin:1rem 0;" />
+
+            <!-- Save Active Filter Form -->
+            <div>
+                <h5 style="margin:0 0 0.4rem 0; font-size:0.85rem; font-weight:800; color:var(--text-main); display:flex; align-items:center; gap:0.35rem;">
+                    <i class="fa-solid fa-plus-circle" style="color:#d97706;"></i> <span>Şu Anki Aktif Filtreyi Kaydet</span>
+                </h5>
+                <p style="font-size:0.78rem; color:var(--text-muted); margin-bottom:0.8rem; line-height:1.4;">
+                    Seçtiğiniz arama kriterlerine (Bölge, Fiyat, Oda Tipi vb.) isim verip kaydedin.
+                </p>
+
+                <div style="margin-bottom:1rem;">
+                    <input type="text" id="saveFilterNameInput" class="custom-input" placeholder="Örn: 2 Kişilik Bronx Evleri" style="width:100%; box-sizing:border-box; padding:0.65rem 0.8rem;" onkeyup="if(event.key==='Enter') appUI.confirmSaveFilter()" />
+                </div>
+
+                <div style="display:flex; gap:0.6rem; justify-content:flex-end;">
+                    <button type="button" onclick="appUI.closeSaveFilterModal()" style="padding:0.55rem 1rem; border-radius:10px; border:1px solid var(--border-color); background:none; color:var(--text-muted); font-weight:600; cursor:pointer;">Kapat</button>
+                    <button type="button" class="btn-primary-coral" onclick="appUI.confirmSaveFilter()" style="padding:0.55rem 1.2rem; font-weight:700; border-radius:10px;">
+                        <i class="fa-solid fa-floppy-disk"></i> Kaydet
+                    </button>
+                </div>
             </div>
         </div>
     </div>
