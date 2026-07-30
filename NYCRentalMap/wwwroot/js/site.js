@@ -1965,12 +1965,14 @@ const appUI = (function () {
                     btn.classList.add('active');
                 }
             }
-            // Trigger map resize so leaflet map smoothly adapts to full width
             setTimeout(() => {
                 if (map) {
                     map.invalidateSize();
                 }
             }, 300);
+        }
+    }
+
     function closeSidebarOnMobile() {
         const grid = document.querySelector('.dashboard-grid');
         if (grid && !grid.classList.contains('sidebar-hidden') && window.innerWidth <= 768) {
