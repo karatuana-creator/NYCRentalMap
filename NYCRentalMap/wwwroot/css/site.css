@@ -2063,6 +2063,118 @@ body {
         white-space: normal !important;
         word-break: break-word !important;
     }
+
+    /* Charts Rows 1 & 2 Mobile Override (Mahallelere Göre Ortalama Fiyat Grafik Düzeltmesi) */
+    .charts-row-1,
+    .charts-row-2 {
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
+        width: 100% !important;
+    }
+
+    .chart-card, .chart-card-sm {
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Keşfet (Explore) Section Mobile Adaptation */
+    .explore-section {
+        padding: 0.85rem !important;
+        margin-top: 1rem !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .explore-hero-banner {
+        padding: 1.25rem !important;
+        margin-bottom: 1.25rem !important;
+    }
+
+    .explore-cards-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
+        width: 100% !important;
+    }
+
+    .explore-card-pro {
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* İstatistik (Statistics) Section Mobile Adaptation */
+    .statistics-section {
+        padding: 0.85rem !important;
+        margin-top: 1rem !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .statistics-section > div[style*="repeat(4, 1fr)"] {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.75rem !important;
+    }
+
+    .statistics-section > div[style*="1.6fr 1fr"] {
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
+    }
+
+    .statistics-section table {
+        display: block !important;
+        width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        white-space: nowrap !important;
+    }
+
+    /* Favorilerim (Favorites) Section Mobile Adaptation */
+    .favorites-section {
+        padding: 0.85rem !important;
+        margin-top: 1rem !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    #favoritesPageGrid {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
+        width: 100% !important;
+    }
+
+    .favorites-section div[style*="gap: 2rem"] {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 0.75rem !important;
+    }
+
+    .favorites-section div[style*="border-left"] {
+        border-left: none !important;
+        padding-left: 0 !important;
+        border-top: 1px solid #e2e8f0 !important;
+        padding-top: 0.5rem !important;
+        width: 100% !important;
+    }
+
+    /* Karşılaştır (Compare) Section Mobile Adaptation */
+    .compare-section {
+        padding: 0.85rem !important;
+        margin-top: 1rem !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    #compareTableWrapper {
+        display: block !important;
+        width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        border-radius: 14px !important;
+    }
+
+    #compareTableWrapper table {
+        min-width: 620px !important;
+    }
 }
 
 @media (min-width: 769px) {
