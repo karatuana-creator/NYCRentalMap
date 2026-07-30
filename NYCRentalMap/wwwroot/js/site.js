@@ -54,13 +54,39 @@ const appUI = (function () {
         }
     }
 
+    function showToast(message) {
+        let toast = document.getElementById('appToastNotice');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'appToastNotice';
+            toast.style.cssText = 'position:fixed; bottom:30px; right:30px; z-index:99999; background:linear-gradient(135deg,#6366f1,#4f46e5); color:#fff; padding:14px 22px; border-radius:14px; font-weight:700; font-size:0.9rem; box-shadow:0 10px 25px rgba(99,102,241,0.4); display:flex; align-items:center; gap:10px; transition:all 0.3s ease; transform:translateY(100px); opacity:0; pointer-events:none; font-family:Inter,sans-serif;';
+            document.body.appendChild(toast);
+        }
+        toast.innerHTML = `<i class="fa-solid fa-code-compare" style="font-size:1.1rem;"></i> <span>${escapeHtml(message)}</span>`;
+        toast.style.transform = 'translateY(0)';
+        toast.style.opacity = '1';
+        setTimeout(() => {
+            toast.style.transform = 'translateY(100px)';
+            toast.style.opacity = '0';
+        }, 2800);
+    }
+
+    function addActivePropertyToCompare(event) {
+        if (event && event.stopPropagation) event.stopPropagation();
+        if (activeProperty && activeProperty.id) {
+            addToCompare(activeProperty.id, event);
+        } else {
+            showToast('Lütfen önce bir ev seçin.');
+        }
+    }
+
     function addToCompare(id, event) {
-        if (event) event.stopPropagation();
+        if (event && event.stopPropagation) event.stopPropagation();
         const numId = Number(id);
         if (!numId) return;
 
         if (compareIds.size >= 4 && !compareIds.has(numId)) {
-            alert('En fazla 4 evi aynı anda karşılaştırabilirsiniz.');
+            showToast('En fazla 4 evi aynı anda karşılaştırabilirsiniz.');
             return;
         }
 
@@ -88,16 +114,25 @@ const appUI = (function () {
         compareItemsMap[numId] = foundItem;
         saveCompareToStorage();
         renderComparePage();
+
+        // Close detail modal if open
+        closeDetailModal();
+
+        // Toast feedback
+        showToast('İlan Karşılaştırma Listesine Eklendi!');
+
+        // Switch tab to compare section
         switchTab('compare');
     }
 
     function removeFromCompare(id, event) {
-        if (event) event.stopPropagation();
+        if (event && event.stopPropagation) event.stopPropagation();
         const numId = Number(id);
         compareIds.delete(numId);
         delete compareItemsMap[numId];
         saveCompareToStorage();
         renderComparePage();
+        showToast('İlan karşılaştırmadan çıkarıldı.');
     }
 
     function clearCompareList() {
@@ -105,6 +140,7 @@ const appUI = (function () {
         compareItemsMap = {};
         saveCompareToStorage();
         renderComparePage();
+        showToast('Karşılaştırma listesi temizlendi.');
     }
 
     function loadFavoritesFromStorage() {
@@ -2591,6 +2627,7 @@ const appUI = (function () {
         resetAiDropdown: resetAiDropdown,
         renderComparePage: renderComparePage,
         addToCompare: addToCompare,
+        addActivePropertyToCompare: addActivePropertyToCompare,
         removeFromCompare: removeFromCompare,
         clearCompareList: clearCompareList,
         clearFieldError: clearFieldError,
