@@ -408,8 +408,9 @@ public class HomeController : Controller
         try
         {
             var rental = await _context.Rentals
+                .FromSqlRaw("SELECT TOP 1 * FROM [AB_NYC_2019] WITH (NOLOCK) WHERE [id] = {0}", id)
                 .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.Id == id);
+                .FirstOrDefaultAsync();
 
             if (rental == null)
                 return Json(new { success = false, message = "İlan bulunamadı" });
@@ -440,12 +441,11 @@ public class HomeController : Controller
             };
 
             // Benzer ilanlar: aynı neighbourhood_group, farklı ID, benzer fiyat
-            var minP = (short)Math.Max(0, rental.Price - 50);
-            var maxP = (short)(rental.Price + 50);
+            var minP = Math.Max(0, rental.Price - 50);
+            var maxP = rental.Price + 50;
             var similarRaw = await _context.Rentals
+                .FromSqlRaw("SELECT TOP 6 * FROM [AB_NYC_2019] WITH (NOLOCK) WHERE [neighbourhood_group] = {0} AND [id] != {1} AND [price] BETWEEN {2} AND {3}", rental.Neighbourhood_Group ?? "", rental.Id, minP, maxP)
                 .AsNoTracking()
-                .Where(s => s.Neighbourhood_Group == rental.Neighbourhood_Group && s.Id != rental.Id && s.Price >= minP && s.Price <= maxP)
-                .Take(6)
                 .ToListAsync();
 
             var similar = similarRaw.Select(s => {

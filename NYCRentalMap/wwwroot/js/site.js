@@ -1163,29 +1163,40 @@ const appUI = (function () {
         'Modern ve şık tasarım. WiFi hızlı, yatak rahat. İş seyahati için ideal.'
     ];
 
+    function getLocalSimilarListings(item) {
+        if (!currentListingsData || !currentListingsData.length) return [];
+        const itemBorough = item.borough || item.neighbourhood_group || '';
+        let list = currentListingsData.filter(x => x.id !== item.id && (x.borough === itemBorough || x.neighbourhood === item.neighbourhood));
+        if (list.length < 3) {
+            list = currentListingsData.filter(x => x.id !== item.id);
+        }
+        return list.slice(0, 6);
+    }
+
     function openDetailModal() {
         if (!activeProperty) return;
         const modal = document.getElementById('detailModalOverlay');
         if (!modal) return;
 
-        // Show modal with loading
+        // Show modal immediately
         modal.classList.add('show');
-        document.getElementById('dfmLoading').style.display = 'flex';
-        document.getElementById('dfmContent').style.display = 'none';
+        document.getElementById('dfmLoading').style.display = 'none';
+        document.getElementById('dfmContent').style.display = 'block';
 
-        // Fetch full data from API
+        // Render instantly with local property data + local similar listings
+        const localSimilar = getLocalSimilarListings(activeProperty);
+        renderDetailModal(activeProperty, localSimilar);
+
+        // Asynchronously fetch extra backend data to enrich if available (non-blocking)
         fetch('/Home/GetRentalById?id=' + activeProperty.id)
             .then(r => r.json())
             .then(data => {
-                if (!data.success) {
-                    // Fallback to local data
-                    renderDetailModal(activeProperty, []);
-                    return;
+                if (data && data.success && data.listing) {
+                    renderDetailModal(data.listing, (data.similarListings && data.similarListings.length) ? data.similarListings : localSimilar);
                 }
-                renderDetailModal(data.listing, data.similarListings || []);
             })
             .catch(() => {
-                renderDetailModal(activeProperty, []);
+                // Already rendered locally
             });
     }
 
