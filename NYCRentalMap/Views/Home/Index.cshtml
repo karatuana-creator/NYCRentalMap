@@ -2,7 +2,7 @@
     ViewData["Title"] = "New York Ev Kiraları Analiz Dashboardu";
 }
 
-<div class="dashboard-grid" id="dashboardGrid">
+<div class="dashboard-grid sidebar-hidden" id="dashboardGrid">
 
     <!-- 1. LEFT SIDEBAR: FILTERS & POPULAR WIDGET -->
     <aside class="sidebar-panel" onclick="if(event.target===this) appUI.toggleSidebarPanel()">
@@ -168,19 +168,6 @@
             </button>
         </div>
 
-        <!-- Widget: Kayıtlı Aramalarım (Sahibinden Style Saved Filters Widget) -->
-        <div class="saved-filters-widget-card" style="background: var(--bg-card); border-radius: 18px; padding: 1.1rem; border: 1px solid var(--border-color); box-shadow: 0 4px 16px rgba(0,0,0,0.04); margin-bottom: 1rem;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.85rem;">
-                <h4 style="margin:0; font-size:0.92rem; font-weight:800; display:flex; align-items:center; gap:0.45rem; color:var(--text-main);">
-                    <i class="fa-solid fa-star" style="color: #f59e0b;"></i> <span>Kayıtlı Aramalarım</span>
-                </h4>
-                <span id="savedFiltersCountBadge" style="font-size:0.7rem; font-weight:800; background:rgba(245,158,11,0.15); color:#d97706; padding:2px 8px; border-radius:12px;">0 Arama</span>
-            </div>
-            <div id="savedFiltersListContainer">
-                <div style="font-size:0.78rem; color:var(--text-muted); text-align:center; padding:0.5rem 0;">Henüz kaydedilmiş aramanız yok. Üstteki butonla hemen ekleyebilirsiniz.</div>
-            </div>
-        </div>
-
         <!-- Widget: En Popüler Evler (Pro Card Version) -->
         <div class="popular-widget-card">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
@@ -245,27 +232,7 @@
     <!-- 2. CENTER MAIN DASHBOARD: KPIS, CHARTS, LISTINGS, BOTTOM CHARTS -->
     <div class="center-content">
 
-        <!-- Top Featured Banner: Kayıtlı Aramalarım (Sahibinden Style Saved Filters) -->
-        <section class="saved-searches-top-banner" style="margin-bottom: 1rem; padding: 1rem 1.25rem; background: linear-gradient(135deg, #faf7f2, #f3ede2); border: 1.5px solid #e3d9cc; border-radius: 20px; box-shadow: 0 4px 18px rgba(0,0,0,0.02);">
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; margin-bottom: 0.75rem;">
-                <div style="display:flex; align-items:center; gap:0.6rem;">
-                    <div style="width:36px; height:36px; border-radius:12px; background:linear-gradient(135deg,#c69b7b,#a87958); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1rem; box-shadow:0 4px 12px rgba(198,155,123,0.3);">
-                        <i class="fa-solid fa-bookmark"></i>
-                    </div>
-                    <div>
-                        <h4 style="margin:0; font-size:0.98rem; font-weight:800; color:#5c3d28;">Kayıtlı Aramalarım (Favori Filtrelerim)</h4>
-                        <p style="margin:0; font-size:0.78rem; color:#8c6b54;">Sık kullandığınız arama kriterlerini tek tıkla uygulayın veya yeni filtre kaydedin.</p>
-                    </div>
-                </div>
-                <button type="button" onclick="appUI.openSaveFilterModal()" style="background:linear-gradient(135deg,#c69b7b,#a87958); color:#fff; border:none; padding:0.55rem 1.1rem; border-radius:12px; font-weight:700; font-size:0.82rem; cursor:pointer; box-shadow:0 4px 12px rgba(198,155,123,0.35); display:flex; align-items:center; gap:0.4rem;">
-                    <i class="fa-solid fa-plus-circle"></i> + Bu Filtreyi Kaydet
-                </button>
-            </div>
 
-            <div id="topSavedSearchesChipsContainer" style="display:flex; flex-wrap:wrap; gap:0.6rem; align-items:center;">
-                <!-- JS renders chips here -->
-            </div>
-        </section>
 
         <!-- 6 KPI Metric Cards Row -->
         <section class="kpi-grid">
@@ -360,6 +327,28 @@
             </div>
         </section>
 
+            <!-- Top Featured Banner: Kayıtlı Aramalarım (Sahibinden Style Saved Filters) -->
+            <section class="saved-searches-top-banner" style="margin: 0.85rem 0 1.2rem 0; padding: 1rem 1.25rem; background: linear-gradient(135deg, #faf7f2, #f3ede2); border: 1.5px solid #e3d9cc; border-radius: 20px; box-shadow: 0 4px 18px rgba(0,0,0,0.02);">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; margin-bottom: 0.75rem;">
+                    <div style="display:flex; align-items:center; gap:0.6rem;">
+                        <div style="width:36px; height:36px; border-radius:12px; background:linear-gradient(135deg,#c69b7b,#a87958); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1rem; box-shadow:0 4px 12px rgba(198,155,123,0.3);">
+                            <i class="fa-solid fa-bookmark"></i>
+                        </div>
+                        <div>
+                            <h4 style="margin:0; font-size:0.98rem; font-weight:800; color:#5c3d28;">Kayıtlı Aramalarım (Favori Filtrelerim)</h4>
+                            <p style="margin:0; font-size:0.78rem; color:#8c6b54;">Sık kullandığınız arama kriterlerini tek tıkla uygulayın veya yeni filtre kaydedin.</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="appUI.openSaveFilterModal()" style="background:linear-gradient(135deg,#c69b7b,#a87958); color:#fff; border:none; padding:0.55rem 1.1rem; border-radius:12px; font-weight:700; font-size:0.82rem; cursor:pointer; box-shadow:0 4px 12px rgba(198,155,123,0.35); display:flex; align-items:center; gap:0.4rem;">
+                        <i class="fa-solid fa-plus-circle"></i> + Bu Filtreyi Kaydet
+                    </button>
+                </div>
+    
+                <div id="topSavedSearchesChipsContainer" style="display:flex; flex-wrap:wrap; gap:0.6rem; align-items:center;">
+                    <!-- JS renders chips here -->
+                </div>
+            </section>
+
         <!-- Listings Section: 4x2 Grid of Cards -->
         <section class="listings-section">
             <div class="listings-header">
@@ -376,20 +365,9 @@
                 </div>
             </div>
 
-            <!-- Kayıtlı Aramalarım Quick Bar (Sahibinden Style Saved Filters Chips Bar) -->
-            <div class="saved-searches-quick-bar" style="margin: 0.85rem 0 1.2rem 0; padding: 0.85rem 1rem; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 4px 14px rgba(0,0,0,0.03);">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.65rem;">
-                    <div style="font-size:0.85rem; font-weight:800; color:var(--text-main); display:flex; align-items:center; gap:0.4rem;">
-                        <i class="fa-solid fa-bookmark" style="color:#a87958;"></i> <span>Kayıtlı Aramalarım (Favori Filtrelerim)</span>
-                    </div>
-                    <button type="button" onclick="appUI.openSaveFilterModal()" style="background:none; border:none; color:#a87958; font-size:0.78rem; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:4px;">
-                        <i class="fa-solid fa-plus-circle"></i> + Yeni Filtre Kaydet
-                    </button>
-                </div>
-                <div id="savedSearchesChipsContainer" style="display:flex; flex-wrap:wrap; gap:0.5rem; align-items:center;">
-                    <!-- JS renders quick filter chips here -->
-                </div>
-            </div>
+
+
+
 
             <!-- 4x2 Grid (8 Ev) -->
             <div class="listings-grid" id="listingsGrid">
@@ -584,30 +562,6 @@
             </div>
         </section>
 
-        <!-- Charts Row 2: Histogram, Monthly Line Chart, Rating Bar Chart -->
-        <section class="charts-row-2">
-            <div class="chart-card-sm">
-                <h5 class="chart-sm-title">Fiyata Göre Dağılım</h5>
-                <div class="chart-sm-wrapper">
-                    <canvas id="priceHistChart"></canvas>
-                </div>
-            </div>
-
-            <div class="chart-card-sm">
-                <h5 class="chart-sm-title">Aylara Göre Ortalama Fiyat</h5>
-                <div class="chart-sm-wrapper">
-                    <canvas id="monthlyLineChart"></canvas>
-                </div>
-            </div>
-
-            <div class="chart-card-sm">
-                <h5 class="chart-sm-title">Yorum Puanı Dağılımı</h5>
-                <div class="chart-sm-wrapper">
-                    <canvas id="ratingBarChart"></canvas>
-                </div>
-            </div>
-        </section>
-
         <!-- EXPLORE SECTION: NEW YORK BÖLGE REHBERİ (KEŞFET SEKMESİ) -->
         <section class="explore-section" id="exploreSection" style="margin-top: 2rem;">
             <div class="explore-hero-banner" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: 2rem; color: var(--text-main); margin-bottom: 2rem; position: relative; overflow: hidden; box-shadow: var(--card-shadow-hover);">
@@ -723,96 +677,6 @@
                 </div>
             </div>
         </section>
-
-        <!-- EXPLORE BOROUGH DETAIL PAGE (TAM EKRAN BEYAZ BÖLGE REHBER SAYFASI) -->
-        <section class="explore-detail-view" id="exploreDetailView" style="display: none; background: #ffffff; border-radius: 20px; padding: 2rem; box-shadow: 0 4px 24px rgba(0,0,0,0.06); border: 1px solid var(--border-color); margin-top: 1.5rem;">
-            <!-- Back Header Navigation Bar -->
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
-                <button type="button" class="btn-outline-dark" onclick="appUI.closeBoroughModal()" style="padding: 0.5rem 1.25rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; border-radius: 10px;">
-                    <i class="fa-solid fa-arrow-left"></i> <span>Tüm Bölgelere Dön</span>
-                </button>
-                <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">
-                    <span style="color: var(--accent-red);"><i class="fa-solid fa-compass"></i> Keşfet</span> / <span id="bModalBadge">Bölge Rehberi</span>
-                </div>
-            </div>
-
-            <!-- Hero Banner Image -->
-            <div class="modal-header-hero" style="position: relative; height: 280px; width: 100%; border-radius: 16px; overflow: hidden; margin-bottom: 1.75rem;">
-                <img id="bModalImg" src="" alt="Bölge Fotoğrafı" style="width: 100%; height: 100%; object-fit: cover;" />
-                <div style="position: absolute; top:0; left:0; right:0; bottom:0; background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(15,23,42,0.85) 100%);"></div>
-                <div style="position: absolute; bottom: 1.75rem; left: 1.75rem; right: 1.75rem; color: #fff;">
-                    <span class="modal-img-badge-pro" style="background: var(--accent-red); color: #fff; font-size: 0.75rem; font-weight: 700; padding: 4px 14px; border-radius: 20px; display: inline-block; margin-bottom: 0.5rem;">NYC Bölge Rehberi</span>
-                    <h2 id="bModalTitle" style="font-size: 2.2rem; font-weight: 800; margin: 0; color: #ffffff; text-shadow: 0 2px 6px rgba(0,0,0,0.4);">Manhattan Bölge Rehberi</h2>
-                    <p class="modal-subtitle" id="bModalSubtitle" style="font-size: 1rem; line-height: 1.5; color: #cbd5e1; margin: 0.35rem 0 0 0;">New York'un simgesel gökdelenleri, lüks restoranları ve 24 saat yaşayan kültürü.</p>
-                </div>
-            </div>
-
-            <div class="modal-body-content" style="padding: 0;">
-                <!-- 4'lü KPI Kart Düzeni -->
-                <div class="borough-kpi-row" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; margin-bottom: 2rem;">
-                    <div class="b-kpi-card" style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.2rem; text-align: center;">
-                        <div style="font-size: 1.4rem; color: var(--accent-red); margin-bottom: 0.3rem;"><i class="fa-solid fa-tag"></i></div>
-                        <span style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Ort. Gece Fiyatı</span>
-                        <strong id="bModalAvgPrice" style="font-size: 1.3rem; color: var(--text-color); font-weight: 800;">$196</strong>
-                    </div>
-                    <div class="b-kpi-card" style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.2rem; text-align: center;">
-                        <div style="font-size: 1.4rem; color: #3b82f6; margin-bottom: 0.3rem;"><i class="fa-solid fa-house"></i></div>
-                        <span style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Toplam Ev Sayısı</span>
-                        <strong id="bModalTotalListings" style="font-size: 1.3rem; color: var(--text-color); font-weight: 800;">21.661</strong>
-                    </div>
-                    <div class="b-kpi-card" style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.2rem; text-align: center;">
-                        <div style="font-size: 1.4rem; color: #eab308; margin-bottom: 0.3rem;"><i class="fa-solid fa-star"></i></div>
-                        <span style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Müşteri Puanı</span>
-                        <strong id="bModalAvgRating" style="font-size: 1.3rem; color: var(--text-color); font-weight: 800;">4.85 / 5</strong>
-                    </div>
-                    <div class="b-kpi-card" style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.2rem; text-align: center;">
-                        <div style="font-size: 1.4rem; color: #10b981; margin-bottom: 0.3rem;"><i class="fa-solid fa-train"></i></div>
-                        <span style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Metro Erişimi</span>
-                        <strong style="font-size: 1.3rem; color: #10b981; font-weight: 800;">%98 Yüksek</strong>
-                    </div>
-                </div>
-
-                <!-- Gezilecek Yerler Galerisi -->
-                <div style="margin-bottom: 2rem;">
-                    <h4 style="font-size: 1.15rem; font-weight: 800; margin-bottom: 1rem; display:flex; align-items:center; gap:0.5rem;">
-                        <i class="fa-solid fa-camera" style="color: var(--accent-red);"></i> <span>İkonik Gezi Noktaları & Şehir Mimarisi</span>
-                    </h4>
-                    <div class="borough-gallery-grid" id="bModalGallery" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
-                        <!-- Injected via JS -->
-                    </div>
-                </div>
-
-                <!-- Ulaşım ve Yaşam İpuçları Panel -->
-                <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.5rem; margin-bottom: 2rem;">
-                    <h4 style="font-size: 1.05rem; font-weight: 800; margin-bottom: 0.65rem; display:flex; align-items:center; gap:0.5rem;">
-                        <i class="fa-solid fa-map-location-dot" style="color: var(--accent-red);"></i> <span>Öne Çıkan Semtler & Turistik Noktalar</span>
-                    </h4>
-                    <p id="bModalAttractions" style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 1.15rem;">Times Square, Central Park, Greenwich Village, Upper East Side, Soho.</p>
-                    
-                    <div style="border-top: 1px dashed var(--border-color); padding-top: 1.15rem; font-size: 0.88rem; color: var(--text-muted); display: flex; gap: 2rem; flex-wrap: wrap;">
-                        <span style="display:flex; align-items:center; gap:0.5rem;"><i class="fa-solid fa-subway" style="color:#3b82f6; font-size:1.1rem;"></i> <span><strong>Ulaşım:</strong> 24 Saat Metro Hatları (A, C, E, 1, 2, 3)</span></span>
-                        <span style="display:flex; align-items:center; gap:0.5rem;"><i class="fa-solid fa-utensils" style="color:#10b981; font-size:1.1rem;"></i> <span><strong>Yeme-İçme:</strong> Gurme Restoranlar & Gece Klüpleri</span></span>
-                    </div>
-                </div>
-
-                <!-- Bölgenin Öne Çıkan Evleri -->
-                <div style="margin-bottom: 2rem;">
-                    <h4 style="font-size: 1.15rem; font-weight: 800; margin-bottom: 1rem; display:flex; align-items:center; gap:0.5rem;">
-                        <i class="fa-solid fa-fire" style="color: var(--accent-red);"></i> <span>Bu Bölgede En Çok Tercih Edilen Öne Çıkan Evler</span>
-                    </h4>
-                    <div class="listings-grid" id="bModalFeaturedHomes" style="grid-template-columns: repeat(2, 1fr); gap: 1.25rem;">
-                        <!-- Injected via JS -->
-                    </div>
-                </div>
-
-                <!-- Bottom Action Buttons -->
-                <div style="display: flex; gap: 1rem; margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
-                    <button type="button" class="btn-primary-coral flex-1" id="btnFilterThisBorough" onclick="appUI.applyBoroughFilterFromModal()" style="padding: 0.95rem; font-size: 1rem; font-weight:700;"><i class="fa-solid fa-building"></i> Tüm <span id="bModalBtnName">Manhattan</span> Evlerini Ana Ekranda Filtrele</button>
-                    <button type="button" class="btn-outline-dark" onclick="appUI.closeBoroughModal()" style="padding: 0.95rem 2rem; font-weight:700;">Keşfet'e Dön</button>
-                </div>
-            </div>
-        </section>
-
         <!-- STATISTICS SECTION: TAM EKRAN İNTERAKTİF ANALİZ & GRAFİK RAPOR PANELERİ -->
         <section class="statistics-section" id="statisticsSection" style="background: #ffffff; border-radius: 20px; padding: 2rem; box-shadow: 0 4px 24px rgba(0,0,0,0.06); border: 1px solid var(--border-color); margin-top: 2rem;">
             <!-- Header Banner -->
@@ -912,7 +776,6 @@
                             <td style="padding: 12px; font-weight:700; color:#334155;">3.920 İlan</td>
                             <td style="padding: 12px; color:#f43f5e; font-weight:800;">$143</td>
                             <td style="padding: 12px; color:#10b981; font-weight:700;">%88 Yüksek</td>
-                        </tr>
                         <tr style="border-bottom: 1px solid #e2e8f0;">
                             <td style="padding: 12px;"><span style="background:#94a3b8; color:#fff; font-size:0.75rem; font-weight:800; padding:3px 9px; border-radius:50%;">2</span></td>
                             <td style="padding: 12px; font-weight:700; color:#1e293b;">Bedford-Stuyvesant</td>
@@ -949,6 +812,122 @@
                 </table>
             </div>
         </section>
+                        </tr>
+        <!-- Charts Row 2: Histogram, Monthly Line Chart, Rating Bar Chart -->
+        <section class="charts-row-2">
+            <div class="chart-card-sm">
+                <h5 class="chart-sm-title">Fiyata Göre Dağılım</h5>
+                <div class="chart-sm-wrapper">
+                    <canvas id="priceHistChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card-sm">
+                <h5 class="chart-sm-title">Aylara Göre Ortalama Fiyat</h5>
+                <div class="chart-sm-wrapper">
+                    <canvas id="monthlyLineChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card-sm">
+                <h5 class="chart-sm-title">Yorum Puanı Dağılımı</h5>
+                <div class="chart-sm-wrapper">
+                    <canvas id="ratingBarChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- EXPLORE BOROUGH DETAIL PAGE (TAM EKRAN BEYAZ BÖLGE REHBER SAYFASI) -->
+        <section class="explore-detail-view" id="exploreDetailView" style="display: none; background: #ffffff; border-radius: 20px; padding: 2rem; box-shadow: 0 4px 24px rgba(0,0,0,0.06); border: 1px solid var(--border-color); margin-top: 1.5rem;">
+            <!-- Back Header Navigation Bar -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+                <button type="button" class="btn-outline-dark" onclick="appUI.closeBoroughModal()" style="padding: 0.5rem 1.25rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; border-radius: 10px;">
+                    <i class="fa-solid fa-arrow-left"></i> <span>Tüm Bölgelere Dön</span>
+                </button>
+                <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">
+                    <span style="color: var(--accent-red);"><i class="fa-solid fa-compass"></i> Keşfet</span> / <span id="bModalBadge">Bölge Rehberi</span>
+                </div>
+            </div>
+
+            <!-- Hero Banner Image -->
+            <div class="modal-header-hero" style="position: relative; height: 280px; width: 100%; border-radius: 16px; overflow: hidden; margin-bottom: 1.75rem;">
+                <img id="bModalImg" src="" alt="Bölge Fotoğrafı" style="width: 100%; height: 100%; object-fit: cover;" />
+                <div style="position: absolute; top:0; left:0; right:0; bottom:0; background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(15,23,42,0.85) 100%);"></div>
+                <div style="position: absolute; bottom: 1.75rem; left: 1.75rem; right: 1.75rem; color: #fff;">
+                    <span class="modal-img-badge-pro" style="background: var(--accent-red); color: #fff; font-size: 0.75rem; font-weight: 700; padding: 4px 14px; border-radius: 20px; display: inline-block; margin-bottom: 0.5rem;">NYC Bölge Rehberi</span>
+                    <h2 id="bModalTitle" style="font-size: 2.2rem; font-weight: 800; margin: 0; color: #ffffff; text-shadow: 0 2px 6px rgba(0,0,0,0.4);">Manhattan Bölge Rehberi</h2>
+                    <p class="modal-subtitle" id="bModalSubtitle" style="font-size: 1rem; line-height: 1.5; color: #cbd5e1; margin: 0.35rem 0 0 0;">New York'un simgesel gökdelenleri, lüks restoranları ve 24 saat yaşayan kültürü.</p>
+                </div>
+            </div>
+
+            <div class="modal-body-content" style="padding: 0;">
+                <!-- 4'lü KPI Kart Düzeni -->
+                <div class="borough-kpi-row" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; margin-bottom: 2rem;">
+                    <div class="b-kpi-card" style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.2rem; text-align: center;">
+                        <div style="font-size: 1.4rem; color: var(--accent-red); margin-bottom: 0.3rem;"><i class="fa-solid fa-tag"></i></div>
+                        <span style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Ort. Gece Fiyatı</span>
+                        <strong id="bModalAvgPrice" style="font-size: 1.3rem; color: var(--text-color); font-weight: 800;">$196</strong>
+                    </div>
+                    <div class="b-kpi-card" style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.2rem; text-align: center;">
+                        <div style="font-size: 1.4rem; color: #3b82f6; margin-bottom: 0.3rem;"><i class="fa-solid fa-house"></i></div>
+                        <span style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Toplam Ev Sayısı</span>
+                        <strong id="bModalTotalListings" style="font-size: 1.3rem; color: var(--text-color); font-weight: 800;">21.661</strong>
+                    </div>
+                    <div class="b-kpi-card" style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.2rem; text-align: center;">
+                        <div style="font-size: 1.4rem; color: #eab308; margin-bottom: 0.3rem;"><i class="fa-solid fa-star"></i></div>
+                        <span style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Müşteri Puanı</span>
+                        <strong id="bModalAvgRating" style="font-size: 1.3rem; color: var(--text-color); font-weight: 800;">4.85 / 5</strong>
+                    </div>
+                    <div class="b-kpi-card" style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.2rem; text-align: center;">
+                        <div style="font-size: 1.4rem; color: #10b981; margin-bottom: 0.3rem;"><i class="fa-solid fa-train"></i></div>
+                        <span style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Metro Erişimi</span>
+                        <strong style="font-size: 1.3rem; color: #10b981; font-weight: 800;">%98 Yüksek</strong>
+                    </div>
+                </div>
+
+                <!-- Gezilecek Yerler Galerisi -->
+                <div style="margin-bottom: 2rem;">
+                    <h4 style="font-size: 1.15rem; font-weight: 800; margin-bottom: 1rem; display:flex; align-items:center; gap:0.5rem;">
+                        <i class="fa-solid fa-camera" style="color: var(--accent-red);"></i> <span>İkonik Gezi Noktaları & Şehir Mimarisi</span>
+                    </h4>
+                    <div class="borough-gallery-grid" id="bModalGallery" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+                        <!-- Injected via JS -->
+                    </div>
+                </div>
+
+                <!-- Ulaşım ve Yaşam İpuçları Panel -->
+                <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.5rem; margin-bottom: 2rem;">
+                    <h4 style="font-size: 1.05rem; font-weight: 800; margin-bottom: 0.65rem; display:flex; align-items:center; gap:0.5rem;">
+                        <i class="fa-solid fa-map-location-dot" style="color: var(--accent-red);"></i> <span>Öne Çıkan Semtler & Turistik Noktalar</span>
+                    </h4>
+                    <p id="bModalAttractions" style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 1.15rem;">Times Square, Central Park, Greenwich Village, Upper East Side, Soho.</p>
+                    
+                    <div style="border-top: 1px dashed var(--border-color); padding-top: 1.15rem; font-size: 0.88rem; color: var(--text-muted); display: flex; gap: 2rem; flex-wrap: wrap;">
+                        <span style="display:flex; align-items:center; gap:0.5rem;"><i class="fa-solid fa-subway" style="color:#3b82f6; font-size:1.1rem;"></i> <span><strong>Ulaşım:</strong> 24 Saat Metro Hatları (A, C, E, 1, 2, 3)</span></span>
+                        <span style="display:flex; align-items:center; gap:0.5rem;"><i class="fa-solid fa-utensils" style="color:#10b981; font-size:1.1rem;"></i> <span><strong>Yeme-İçme:</strong> Gurme Restoranlar & Gece Klüpleri</span></span>
+                    </div>
+                </div>
+
+                <!-- Bölgenin Öne Çıkan Evleri -->
+                <div style="margin-bottom: 2rem;">
+                    <h4 style="font-size: 1.15rem; font-weight: 800; margin-bottom: 1rem; display:flex; align-items:center; gap:0.5rem;">
+                        <i class="fa-solid fa-fire" style="color: var(--accent-red);"></i> <span>Bu Bölgede En Çok Tercih Edilen Öne Çıkan Evler</span>
+                    </h4>
+                    <div class="listings-grid" id="bModalFeaturedHomes" style="grid-template-columns: repeat(2, 1fr); gap: 1.25rem;">
+                        <!-- Injected via JS -->
+                    </div>
+                </div>
+
+                <!-- Bottom Action Buttons -->
+                <div style="display: flex; gap: 1rem; margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+                    <button type="button" class="btn-primary-coral flex-1" id="btnFilterThisBorough" onclick="appUI.applyBoroughFilterFromModal()" style="padding: 0.95rem; font-size: 1rem; font-weight:700;"><i class="fa-solid fa-building"></i> Tüm <span id="bModalBtnName">Manhattan</span> Evlerini Ana Ekranda Filtrele</button>
+                    <button type="button" class="btn-outline-dark" onclick="appUI.closeBoroughModal()" style="padding: 0.95rem 2rem; font-weight:700;">Keşfet'e Dön</button>
+                </div>
+            </div>
+        </section>
+
+
 
         <!-- FAVORITES SECTION: TAM SAYFA FAVORİLERİM YÖNETİM PANELİ -->
         <section class="favorites-section" id="favoritesSection" style="background: #ffffff; border-radius: 20px; padding: 2rem; box-shadow: 0 4px 24px rgba(0,0,0,0.06); border: 1px solid var(--border-color); margin-top: 2rem;">
@@ -991,8 +970,8 @@
                 </div>
             </div>
 
-            <!-- Favorites Grid Container -->
-            <div class="listings-grid" id="favoritesPageGrid" style="grid-template-columns: repeat(3, 1fr); gap: 1.5rem;">
+            <!-- Favorites Grid Container (Minimal Compact Grid) -->
+            <div class="listings-grid" id="favoritesPageGrid" style="grid-template-columns: repeat(4, 1fr); gap: 1rem;">
                 <!-- Injected via JS -->
             </div>
 

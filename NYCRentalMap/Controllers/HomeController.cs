@@ -372,6 +372,11 @@ public class HomeController : Controller
     [HttpGet]
     public async Task<IActionResult> GetAllMapMarkers()
     {
+        if (_cachedAllMarkers != null && _cachedAllMarkers.Count > 0)
+        {
+            return Json(_cachedAllMarkers);
+        }
+
         try
         {
             var sql = """
@@ -416,6 +421,11 @@ public class HomeController : Controller
                     Borough      = reader.IsDBNull(6) ? "" : reader.GetString(6),
                     Neighbourhood= reader.IsDBNull(7) ? "" : reader.GetString(7)
                 });
+            }
+
+            lock (_cacheLock)
+            {
+                _cachedAllMarkers = result;
             }
 
             Console.WriteLine($"GetAllMapMarkers: {result.Count} koordinat döndürüldü.");
@@ -495,6 +505,39 @@ public class HomeController : Controller
         {
             Console.WriteLine("GetRentalById ERROR: " + ex.Message);
             return Json(new { success = false, message = "Hata oluştu" });
+        }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CheckFavoritePrices([FromBody] int[] ids)
+    {
+        if (ids == null || ids.Length == 0)
+        {
+            return Json(new { success = false, data = new object[0] });
+        }
+
+        try
+        {
+            var validIds = ids.Where(i => i > 0).Distinct().ToList();
+            if (validIds.Count == 0) return Json(new { success = false, data = new object[0] });
+
+            // Build comma-separated list of IDs for SQL IN clause
+            var idList = string.Join(",", validIds);
+            var sql = $"SELECT * FROM [AB_NYC_2019] WITH (NOLOCK) WHERE [id] IN ({idList})";
+            
+            var rawList = await _context.Rentals
+                .FromSqlRaw(sql)
+                .AsNoTracking()
+                .ToListAsync();
+
+            var results = rawList.Select(r => new { id = r.Id, name = string.IsNullOrWhiteSpace(r.Name) ? ("Ev #" + r.Id) : r.Name, price = (int)r.Price }).ToList();
+
+            return Json(new { success = true, data = results });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("CheckFavoritePrices ERROR: " + ex.Message);
+            return Json(new { success = false, message = "Veritabanı hatası" });
         }
     }
 

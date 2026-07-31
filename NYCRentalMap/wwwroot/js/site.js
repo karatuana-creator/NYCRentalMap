@@ -28,6 +28,7 @@ const appUI = (function () {
 
     let currentListingsData = [];
     let activeProperty = null;
+    let debounceTimer = null;
 
     function loadCompareFromStorage() {
         try {
@@ -53,6 +54,138 @@ const appUI = (function () {
             console.error('Compare saving error:', e);
         }
     }
+
+    // ── Currency State ──
+    let currentCurrency = 'USD';
+    const currencyRates = {
+        'USD': { rate: 1.0, symbol: '$' },
+        'TRY': { rate: 35.50, symbol: '₺' },
+        'EUR': { rate: 0.92, symbol: '€' },
+        'GBP': { rate: 0.78, symbol: '£' }
+    };
+
+    function loadCurrencyFromStorage() {
+        try {
+            const stored = localStorage.getItem('nyc_currency');
+            if (stored && currencyRates[stored]) currentCurrency = stored;
+        } catch (e) { }
+    }
+
+    function formatPrice(priceUSD) {
+        if (!priceUSD || isNaN(priceUSD)) return '-';
+        const rateObj = currencyRates[currentCurrency] || currencyRates['USD'];
+        const val = Math.round(priceUSD * rateObj.rate);
+        return rateObj.symbol + val.toLocaleString('tr-TR');
+    }
+
+    function toggleCurrencyDropdown() {
+        const menu = document.getElementById('currencyMenu');
+        if (menu) menu.classList.toggle('show');
+    }
+
+    function selectCurrency(code) {
+        if (!currencyRates[code]) return;
+        currentCurrency = code;
+        try { localStorage.setItem('nyc_currency', code); } catch(e) {}
+        
+        const btnSym = document.getElementById('currencyBadgeSymbol');
+        const btnCode = document.getElementById('currencyBadgeCode');
+        if (btnSym) btnSym.textContent = currencyRates[code].symbol;
+        if (btnCode) btnCode.textContent = code;
+
+        document.querySelectorAll('.currency-option').forEach(el => el.classList.remove('active'));
+        const opt = document.getElementById('optCurr' + code);
+        if (opt) opt.classList.add('active');
+
+        document.querySelectorAll('.btn-settings-currency').forEach(btn => btn.classList.remove('active'));
+        const sBtn = document.getElementById('btnSetCurr' + code);
+        if (sBtn) sBtn.classList.add('active');
+
+        document.querySelectorAll('.c-check').forEach(c => c.style.display = 'none');
+        const chk = document.getElementById('chkCurrency' + code);
+        if (chk) chk.style.display = 'inline-block';
+
+        const menu = document.getElementById('currencyMenu');
+        if (menu) menu.classList.remove('show');
+
+        // Update all existing price elements in DOM instantly (0ms)
+        document.querySelectorAll('.price-val, .card-price-badge-inline, .price-huge strong').forEach(el => {
+            let num = el.getAttribute('data-usd');
+            if (!num) {
+                const textNum = el.textContent.replace(/[^0-9.]/g, '');
+                num = parseFloat(textNum);
+                if (!isNaN(num) && num > 0) el.setAttribute('data-usd', num);
+            } else {
+                num = parseFloat(num);
+            }
+            if (!isNaN(num) && num > 0) {
+                el.textContent = formatPrice(num);
+            }
+        });
+
+        // Instant DOM re-render without slow 15-second network delay (0ms)
+        if (currentListingsData && currentListingsData.length > 0) {
+            renderListingsGrid(currentListingsData);
+        }
+        renderFavoritesPage();
+        renderComparePage();
+        
+        const priceInput = document.getElementById('priceRangeInput');
+        if (priceInput && typeof updatePriceLabel === 'function') {
+            updatePriceLabel(priceInput.value); 
+        }
+        
+        showToast(`💱 Para birimi ${code} (${currencyRates[code].symbol}) olarak değiştirildi.`);
+    }
+
+    // Initialize currency on load
+    document.addEventListener("DOMContentLoaded", () => {
+        loadCurrencyFromStorage();
+        selectCurrency(currentCurrency, true); // prevent double fetch and toast on load
+    });
+
+    // ── Settings Modal Functions ──
+    function openSettingsModal() {
+        const m = document.getElementById('settingsModalOverlay');
+        if (m) {
+            m.style.display = 'flex';
+            document.querySelectorAll('.btn-settings-currency').forEach(btn => btn.classList.remove('active'));
+            const sBtn = document.getElementById('btnSetCurr' + currentCurrency);
+            if (sBtn) sBtn.classList.add('active');
+            
+            // Close other modals if open
+            const menu = document.getElementById('userMenuDropdown');
+            if (menu) menu.classList.remove('show');
+        }
+    }
+
+    function closeSettingsModal() {
+        const m = document.getElementById('settingsModalOverlay');
+        if (m) m.style.display = 'none';
+    }
+
+    function resetAllData() {
+        if(confirm("Tüm kayıtlı verileriniz (favoriler, aramalar) silinecek. Emin misiniz?")) {
+            localStorage.clear();
+            window.location.reload();
+        }
+    }
+
+    function exportUserData() {
+        const data = {
+            favorites: Array.from(favoriteIds),
+            searches: savedSearches
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'nyc_rental_data.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast("Veriler bilgisayarınıza indirildi.");
+    }
+
 
     // ── Saved Searches (Kayıtlı Aramalarım - Sahibinden Style) State & Storage ──
     let savedSearches = [];
@@ -134,7 +267,7 @@ const appUI = (function () {
                             <span>${escapeHtml(item.name)}</span>
                         </div>
                         <div style="font-size:0.7rem; color:#8c6b54;">
-                            📍 ${escapeHtml(bName || 'Tüm Bölgeler')} · 💵 Max $${item.priceMax || 10000} ${guestCount > 0 ? `· 👥 ${guestCount} Misafir` : ''}
+                            📍 ${escapeHtml(bName || 'Tüm Bölgeler')} · 💵 Max ${formatPrice(item.priceMax || 10000)} ${guestCount > 0 ? `· 👥 ${guestCount} Misafir` : ''}
                         </div>
                     </div>
                     <div style="display:flex; align-items:center; gap:0.35rem;">
@@ -420,6 +553,121 @@ const appUI = (function () {
         }
     }
 
+    let unreadNotifCount = 0;
+
+    function addNotification(type, message, timeText) {
+        const notifList = document.getElementById('notifList');
+        const notifBadge = document.getElementById('notifBadge');
+        if (!notifList) return;
+        
+        let iconHtml = '';
+        let iconBg = '';
+        let iconColor = '';
+        let badgeColor = '';
+        if (type === 'increase') {
+            iconHtml = '<i class=\"fa-solid fa-arrow-trend-up\"></i>';
+            iconBg = 'rgba(244, 63, 94, 0.1)';
+            iconColor = 'var(--accent-red)';
+            badgeColor = 'var(--accent-red)';
+        } else if (type === 'decrease') {
+            iconHtml = '<i class=\"fa-solid fa-arrow-trend-down\"></i>';
+            iconBg = 'rgba(16, 185, 129, 0.1)';
+            iconColor = '#10b981';
+            badgeColor = '#10b981';
+        } else {
+            iconHtml = '<i class=\"fa-solid fa-bell\"></i>';
+            iconBg = 'rgba(59, 130, 246, 0.1)';
+            iconColor = '#3b82f6';
+            badgeColor = '#3b82f6';
+        }
+
+        const itemHtml = `
+            <div class=\"modal-item\" style=\"padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; gap: 1rem; align-items: flex-start; cursor: pointer; transition: background 0.2s; background: rgba(198, 155, 123, 0.05);\" onmouseover=\"this.style.background='var(--bg-hover)'\" onmouseout=\"this.style.background='rgba(198, 155, 123, 0.05)'\">
+                <div style=\"background: ${iconBg}; color: ${iconColor}; width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.1rem; flex-shrink: 0;\">
+                    ${iconHtml}
+                </div>
+                <div class=\"item-info\" style=\"flex: 1;\">
+                    <p style=\"margin: 0 0 0.4rem 0; font-size: 0.9rem; color: var(--text-main); line-height: 1.4;\">${message}</p>
+                    <small style=\"color: var(--text-muted); font-size: 0.75rem; display: flex; align-items: center; gap: 0.3rem;\"><i class=\"fa-regular fa-clock\"></i> ${timeText}</small>
+                </div>
+                <div style=\"width: 8px; height: 8px; background: ${badgeColor}; border-radius: 50%; flex-shrink: 0; margin-top: 6px;\"></div>
+            </div>
+        `;
+        notifList.insertAdjacentHTML('afterbegin', itemHtml);
+        
+        unreadNotifCount++;
+        if (notifBadge) {
+            notifBadge.style.display = 'flex';
+            notifBadge.textContent = unreadNotifCount;
+        }
+    }
+
+    function getDirections() {
+        if (activeProperty && activeProperty.latitude && activeProperty.longitude) {
+            const lat = activeProperty.latitude;
+            const lng = activeProperty.longitude;
+            window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
+        }
+    }
+
+    function markAllNotifsRead() {
+        unreadNotifCount = 0;
+        const notifBadge = document.getElementById('notifBadge');
+        if (notifBadge) {
+            notifBadge.style.display = 'none';
+            notifBadge.textContent = '0';
+        }
+        document.querySelectorAll('.notif-modal .modal-item').forEach(el => {
+            el.style.background = 'transparent';
+            el.style.borderLeft = 'none';
+        });
+    }
+
+    function checkFavoritePriceChanges() {
+        if (favoriteIds.size === 0) return;
+        
+        const ids = Array.from(favoriteIds);
+        fetch('/Home/CheckFavoritePrices', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(ids)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data && data.success && data.data) {
+                let hasChanges = false;
+                data.data.forEach(dbItem => {
+                    // SADECE VE SADECE FAVORİLERE EKLENMİŞ EVLER İÇİN BİLDİRİM FİLTRESİ
+                    if (!favoriteIds.has(Number(dbItem.id))) return;
+
+                    const localItem = favoriteItemsMap[dbItem.id];
+                    if (localItem && localItem.price !== undefined) {
+                        const oldPrice = localItem.price;
+                        const newPrice = dbItem.price;
+                        
+                        if (newPrice > oldPrice) {
+                            addNotification('increase', `<strong>Favori Evinizin Fiyatı Arttı!</strong> <em>${escapeHtml(dbItem.name)}</em> ilanının fiyatı $${oldPrice} ➔ <strong>$${newPrice}</strong> oldu.`, 'Az önce');
+                            localItem.price = newPrice;
+                            hasChanges = true;
+                        } else if (newPrice < oldPrice) {
+                            addNotification('decrease', `<strong>Favori Evinizde İndirim Var!</strong> <em>${escapeHtml(dbItem.name)}</em> ilanının fiyatı $${oldPrice} ➔ <strong>$${newPrice}</strong> seviyesine düştü!`, 'Az önce');
+                            localItem.price = newPrice;
+                            hasChanges = true;
+                        }
+                    }
+                });
+                
+                if (hasChanges) {
+                    saveFavoritesToStorage();
+                    syncFavoriteUI();
+                    renderFavoritesPage();
+                    showToast("Favorilediğiniz evlerde fiyat değişimi oldu! Bildirimleri inceleyin.");
+                }
+            }
+        })
+        .catch(err => console.error("Price check error: ", err));
+    }
+
     function syncFavoriteUI() {
         const count = favoriteIds.size;
         
@@ -620,7 +868,7 @@ const appUI = (function () {
                         <td style="padding:1rem; font-weight:700; color:var(--text-main, #334155); border-bottom:1px solid var(--border-color, #e2e8f0);"><i class="fa-solid fa-tag" style="color:#e11d48; margin-right:6px;"></i> Gecelik Fiyat</td>
         `;
         compareProps.forEach(p => {
-            html += `<td style="padding:1rem; text-align:center; font-weight:800; font-size:1.1rem; color:#e11d48; border-bottom:1px solid var(--border-color, #e2e8f0); background:var(--bg-card, #fff);">$${p.price || 120} <small style="font-weight:400; color:var(--text-muted, #64748b); font-size:0.75rem;">/gece</small></td>`;
+            html += `<td style="padding:1rem; text-align:center; font-weight:800; font-size:1.1rem; color:#e11d48; border-bottom:1px solid var(--border-color, #e2e8f0); background:var(--bg-card, #fff);">${formatPrice(p.price || 120)} <small style="font-weight:400; color:var(--text-muted, #64748b); font-size:0.75rem;">/gece</small></td>`;
         });
 
         html += `
@@ -732,7 +980,7 @@ const appUI = (function () {
             html += `
                 <div class="fav-mini-card" onclick="appUI.selectPropertyById(${p.id})">
                     <div class="fav-mini-info">
-                        <strong>$${p.price} / gece</strong>
+                        <strong>${formatPrice(p.price)} / gece</strong>
                         <span>${escapeHtml(p.borough || 'New York')}</span>
                         <p style="font-size:0.7rem; color:#d1d5db; margin:0; text-overflow:ellipsis; overflow:hidden; whitespace:nowrap;">${escapeHtml(p.name)}</p>
                     </div>
@@ -756,6 +1004,7 @@ const appUI = (function () {
             navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW reg error:', err));
         }
         loadFavoritesFromStorage();
+        checkFavoritePriceChanges();
         loadCompareFromStorage();
         loadSavedSearchesFromStorage();
         syncFavoriteUI();
@@ -891,6 +1140,7 @@ const appUI = (function () {
                     const itemId = item.id ?? item.Id;
                     const name = item.name ?? item.Name ?? 'Kiralık Ev';
                     const price = item.price ?? item.Price ?? '–';
+                    const formattedPrice = price === '–' ? '–' : formatPrice(price);
                     const borough = item.borough ?? item.Borough ?? '';
                     const neighbourhood = item.neighbourhood ?? item.Neighbourhood ?? '';
                     const roomType = item.roomType ?? item.RoomType ?? 'Tüm Ev';
@@ -904,10 +1154,13 @@ const appUI = (function () {
                             <div style="font-size:0.7rem;font-weight:600;color:#ea4335;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">${escapeHtml(borough)}${neighbourhood ? ' · ' + escapeHtml(neighbourhood) : ''}</div>
                             <strong style="font-size:0.85rem;color:#0f172a;display:block;margin-bottom:6px;line-height:1.35;">${escapeHtml(name)}</strong>
                             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-                                <span style="color:#ea4335;font-weight:800;font-size:1rem;">$${price}<small style="font-weight:400;color:#64748b;font-size:0.75rem;"> / gece</small></span>
+                                <span style="color:#ea4335;font-weight:800;font-size:1rem;">${formattedPrice}<small style="font-weight:400;color:#64748b;font-size:0.75rem;"> / gece</small></span>
                                 <span style="background:#f1f5f9;color:#475569;font-size:0.7rem;font-weight:600;padding:2px 7px;border-radius:99px;">${escapeHtml(roomType)}</span>
                             </div>
-                            <button onclick="appUI.selectPropertyById(${itemId})" style="background:linear-gradient(135deg,#ea4335,#c0392b);color:#fff;border:none;padding:7px 14px;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;width:100%;letter-spacing:0.3px;">🏠 Detayları İncele</button>
+                            <div style="display:flex;gap:0.4rem;width:100%;">
+                                <button onclick="appUI.selectPropertyById(${itemId})" style="flex:2;background:linear-gradient(135deg,#ea4335,#c0392b);color:#fff;border:none;padding:7px 10px;border-radius:8px;font-size:0.75rem;font-weight:700;cursor:pointer;letter-spacing:0.3px;">🏠 Detaylar</button>
+                                <button onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}', '_blank')" style="flex:1;background:linear-gradient(135deg,#1e293b,#0f172a);color:#fff;border:none;padding:7px;border-radius:8px;font-size:0.75rem;font-weight:700;cursor:pointer;" title="Yol Tarifi Al"><i class="fa-solid fa-route"></i></button>
+                            </div>
                         </div>
                     `, { maxWidth: 240 });
 
@@ -941,6 +1194,7 @@ const appUI = (function () {
             const itemId = item.id ?? item.Id;
             const name = item.name ?? item.Name ?? 'Kiralık Ev';
             const price = item.price ?? item.Price ?? '–';
+            const formattedPrice = price === '–' ? '–' : formatPrice(price);
             const borough = item.borough ?? item.Borough ?? '';
             const neighbourhood = item.neighbourhood ?? item.Neighbourhood ?? '';
             const roomType = item.roomType ?? item.RoomType ?? 'Tüm Ev';
@@ -953,10 +1207,13 @@ const appUI = (function () {
                     <div style="font-size:0.7rem;font-weight:600;color:#ea4335;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">${escapeHtml(borough)}${neighbourhood ? ' · ' + escapeHtml(neighbourhood) : ''}</div>
                     <strong style="font-size:0.85rem;color:#0f172a;display:block;margin-bottom:6px;line-height:1.35;">${escapeHtml(name)}</strong>
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-                        <span style="color:#ea4335;font-weight:800;font-size:1rem;">$${price}<small style="font-weight:400;color:#64748b;font-size:0.75rem;"> / gece</small></span>
+                        <span style="color:#ea4335;font-weight:800;font-size:1rem;">${formattedPrice}<small style="font-weight:400;color:#64748b;font-size:0.75rem;"> / gece</small></span>
                         <span style="background:#f1f5f9;color:#475569;font-size:0.7rem;font-weight:600;padding:2px 7px;border-radius:99px;">${escapeHtml(roomType)}</span>
                     </div>
-                    <button onclick="appUI.selectPropertyById(${itemId})" style="background:linear-gradient(135deg,#ea4335,#c0392b);color:#fff;border:none;padding:7px 14px;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;width:100%;letter-spacing:0.3px;">🏠 Detayları İncele</button>
+                            <div style="display:flex;gap:0.4rem;width:100%;">
+                                <button onclick="appUI.selectPropertyById(${itemId})" style="flex:2;background:linear-gradient(135deg,#ea4335,#c0392b);color:#fff;border:none;padding:7px 10px;border-radius:8px;font-size:0.75rem;font-weight:700;cursor:pointer;letter-spacing:0.3px;">🏠 Detaylar</button>
+                                <button onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}', '_blank')" style="flex:1;background:linear-gradient(135deg,#1e293b,#0f172a);color:#fff;border:none;padding:7px;border-radius:8px;font-size:0.75rem;font-weight:700;cursor:pointer;" title="Yol Tarifi Al"><i class="fa-solid fa-route"></i></button>
+                            </div>
                 </div>
             `, { maxWidth: 240 });
 
@@ -1029,7 +1286,7 @@ const appUI = (function () {
                         tooltip: {
                             callbacks: {
                                 label: function (context) {
-                                    return ` Gecelik Ort. Fiyat: $${context.raw}`;
+                                    return ` Gecelik Ort. Fiyat: ${formatPrice(context.raw)}`;
                                 }
                             }
                         }
@@ -1038,7 +1295,7 @@ const appUI = (function () {
                         x: {
                             grid: { color: 'rgba(0,0,0,0.04)' },
                             ticks: {
-                                callback: function (val) { return '$' + val; },
+                                callback: function (val) { return formatPrice(val); },
                                 font: { size: 10, family: 'Inter' }
                             }
                         },
@@ -1150,7 +1407,7 @@ const appUI = (function () {
                     plugins: { legend: { display: false } },
                     scales: {
                         x: { grid: { display: false }, ticks: { font: { size: 11, weight: '700' }, color: '#64748b' } },
-                        y: { grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { callback: v => '$' + v, font: { size: 11 }, color: '#64748b' } }
+                        y: { grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { callback: v => formatPrice(v), font: { size: 11 }, color: '#64748b' } }
                     },
                     responsive: true,
                     maintainAspectRatio: false
@@ -1177,6 +1434,29 @@ const appUI = (function () {
                     responsive: true,
                     maintainAspectRatio: false
                 }
+            });
+        }
+    }
+
+    function initSearchSync() {
+        const topSearch = document.getElementById('topSearchInput');
+        const keywordInput = document.getElementById('keywordInput');
+
+        let debounceTimer;
+
+        if (topSearch) {
+            topSearch.addEventListener('input', function () {
+                if (keywordInput) keywordInput.value = topSearch.value;
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => { fetchData(); }, 400);
+            });
+        }
+
+        if (keywordInput) {
+            keywordInput.addEventListener('input', function () {
+                if (topSearch) topSearch.value = keywordInput.value;
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => { fetchData(); }, 400);
             });
         }
     }
@@ -1294,9 +1574,9 @@ const appUI = (function () {
     function updateStats(stats) {
         if (!stats) return;
         document.getElementById('kpiTotalHouses').textContent = (stats.totalCount || 48895).toLocaleString('tr-TR');
-        document.getElementById('kpiAvgPrice').textContent = '$' + (stats.avgPrice || 152).toLocaleString('tr-TR');
-        document.getElementById('kpiMaxPrice').textContent = '$' + (stats.maxPrice || 10000).toLocaleString('tr-TR') + '+';
-        document.getElementById('kpiMinPrice').textContent = '$' + (stats.minPrice || 10).toLocaleString('tr-TR');
+        document.getElementById('kpiAvgPrice').textContent = formatPrice(stats.avgPrice || 152);
+        document.getElementById('kpiMaxPrice').textContent = formatPrice(stats.maxPrice || 10000) + '+';
+        document.getElementById('kpiMinPrice').textContent = formatPrice(stats.minPrice || 10);
         document.getElementById('kpiTotalReviews').textContent = formatCompactNumber(stats.totalReviews || 1520000);
         document.getElementById('kpiAvgRating').textContent = (stats.avgRating || 4.62).toString();
         
@@ -1331,7 +1611,7 @@ const appUI = (function () {
                 <div class="property-card" onclick="appUI.selectPropertyById(${item.id})">
                     <div class="card-img-wrap">
                         <img src="${imgUrl}" alt="${escapeHtml(item.name)}" loading="lazy" />
-                        <div class="card-price-badge">$${item.price} <small>/ gece</small></div>
+                        <div class="card-price-badge">${formatPrice(item.price)} <small>/ gece</small></div>
                         <button class="fav-btn ${favClass}" onclick="event.stopPropagation(); appUI.toggleFavorite(${item.id}, this)">
                             <i class="${heartIcon}"></i>
                         </button>
@@ -1407,7 +1687,7 @@ const appUI = (function () {
                         <div class="pop-location">📍 ${escapeHtml(item.neighbourhood || item.borough || 'New York')}, NYC</div>
                         <div class="pop-meta">
                             <span><i class="fa-solid fa-star icon-star"></i> ${item.rating || 4.85}</span>
-                            <span class="pop-price">$${item.price} <small>/ gece</small></span>
+                            <span class="pop-price">${formatPrice(item.price)} <small>/ gece</small></span>
                         </div>
                     </div>
                 </div>
@@ -1570,7 +1850,7 @@ const appUI = (function () {
             document.getElementById('popRoomType').innerHTML = `<i class="fa-solid fa-house-chimney"></i> ${p.roomType}`;
             document.getElementById('popRating').textContent = p.rating;
             document.getElementById('popReviews').textContent = `(${p.reviews} yorum)`;
-            document.getElementById('popPrice').textContent = '$' + p.price;
+            document.getElementById('popPrice').innerHTML = formatPrice(p.price);
 
             popupCard.classList.add('show');
         }
@@ -1669,7 +1949,7 @@ const appUI = (function () {
         document.getElementById('dfmImg').src = listing.imageUrl || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=600&q=80';
 
         // Price
-        document.getElementById('dfmPrice').innerHTML = '$' + listing.price + ' <small>/ gece</small>';
+        document.getElementById('dfmPrice').innerHTML = formatPrice(listing.price) + ' <small>/ gece</small>';
 
         // Fav button state
         var favIds = JSON.parse(localStorage.getItem('nycFavorites') || '[]');
@@ -1721,7 +2001,7 @@ const appUI = (function () {
                 attribution: '© OpenStreetMap'
             }).addTo(detailMiniMap);
             detailMiniMarker = L.marker([lat, lng]).addTo(detailMiniMap)
-                .bindPopup('<b>' + escapeHtml(listing.name || '') + '</b><br>$' + listing.price + '/gece')
+                .bindPopup('<b>' + escapeHtml(listing.name || '') + '</b><br>' + formatPrice(listing.price) + '/gece')
                 .openPopup();
             setTimeout(function() { detailMiniMap.invalidateSize(); }, 200);
         }, 100);
@@ -1768,7 +2048,7 @@ const appUI = (function () {
                         '<div class="dfm-similar-title">' + escapeHtml(s.name || 'İlan') + '</div>' +
                         '<div class="dfm-similar-loc">📍 ' + escapeHtml(s.neighbourhood || '') + '</div>' +
                         '<div class="dfm-similar-bottom">' +
-                            '<span class="dfm-similar-price">$' + s.price + '</span>' +
+                            '<span class="dfm-similar-price">' + formatPrice(s.price) + '</span>' +
                             '<span class="dfm-similar-rating"><i class="fa-solid fa-star"></i> ' + s.rating + '</span>' +
                         '</div>' +
                     '</div>' +
@@ -2065,7 +2345,7 @@ const appUI = (function () {
                 homesHtml += `
                     <div class="property-card no-img-card" style="padding:0.9rem;" onclick="appUI.closeBoroughModal(); appUI.selectPropertyById(${item.id})">
                         <div class="card-text-header" style="margin-bottom:0.4rem;">
-                            <div class="card-price-badge-inline">$${item.price} <small>/ gece</small></div>
+                            <div class="card-price-badge-inline">${formatPrice(item.price)} <small>/ gece</small></div>
                             <span style="font-size:0.78rem; color:var(--text-muted);"><i class="fa-solid fa-star icon-star"></i> ${item.rating}</span>
                         </div>
                         <div class="card-body-content">
@@ -2109,12 +2389,23 @@ const appUI = (function () {
         fetchData();
     }
 
-    function updatePriceLabel(val) {
+    function updatePriceLabel(val, preventFetch = false) {
         const badge = document.getElementById('rangeBadgeText');
         const maxVal = document.getElementById('maxPriceVal');
-        if (badge) badge.textContent = '$10 - $' + val + (val >= 1000 ? '+' : '');
-        if (maxVal) maxVal.textContent = '$' + val + (val >= 1000 ? '+' : '');
-        fetchData();
+        const minVal = document.getElementById('minPriceVal');
+        
+        const formattedMin = typeof formatPrice === 'function' ? formatPrice(10) : '$10';
+        const formattedVal = typeof formatPrice === 'function' ? formatPrice(val) : '$' + val;
+        const formattedZero = typeof formatPrice === 'function' ? formatPrice(0) : '$0';
+        
+        if (badge) badge.textContent = formattedMin + ' - ' + formattedVal + (val >= 1000 ? '+' : '');
+        if (maxVal) maxVal.textContent = formattedVal + (val >= 1000 ? '+' : '');
+        if (minVal) minVal.textContent = formattedZero;
+        
+        if (!preventFetch) {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => { fetchData(); }, 400);
+        }
     }
 
     function updateReviewsLabel(val) {
@@ -2459,7 +2750,6 @@ const appUI = (function () {
             if (activeProperty) document.getElementById('successPropTitle').textContent = activeProperty.name;
             if (checkIn && checkOut) document.getElementById('successDates').textContent = `${checkIn} ile ${checkOut} arası`;
             document.getElementById('successPaidAmount').textContent = totalPrice;
-
             successScreen.style.display = 'block';
         }
     }
@@ -2535,12 +2825,18 @@ const appUI = (function () {
         const modal = document.getElementById('loginModalOverlay');
         const userModal = document.getElementById('userModal');
         if (userModal) userModal.classList.remove('show');
-        if (modal) modal.classList.add('show');
+        if (modal) {
+            modal.style.display = 'flex';
+            modal.classList.add('show');
+        }
     }
 
     function closeLoginModal() {
         const modal = document.getElementById('loginModalOverlay');
-        if (modal) modal.classList.remove('show');
+        if (modal) {
+            modal.style.display = 'none';
+            modal.classList.remove('show');
+        }
     }
 
     function submitLogin() {
@@ -2570,12 +2866,18 @@ const appUI = (function () {
         const modal = document.getElementById('registerModalOverlay');
         const userModal = document.getElementById('userModal');
         if (userModal) userModal.classList.remove('show');
-        if (modal) modal.classList.add('show');
+        if (modal) {
+            modal.style.display = 'flex';
+            modal.classList.add('show');
+        }
     }
 
     function closeRegisterModal() {
         const modal = document.getElementById('registerModalOverlay');
-        if (modal) modal.classList.remove('show');
+        if (modal) {
+            modal.style.display = 'none';
+            modal.classList.remove('show');
+        }
     }
 
     function submitRegister() {
@@ -2595,7 +2897,10 @@ const appUI = (function () {
         const modal = document.getElementById('profileModalOverlay');
         const userModal = document.getElementById('userModal');
         if (userModal) userModal.classList.remove('show');
-        if (modal) modal.classList.add('show');
+        if (modal) {
+            modal.style.display = 'flex';
+            modal.classList.add('show');
+        }
 
         const favCount = document.getElementById('profileFavCount');
         if (favCount) favCount.textContent = favoriteIds.size;
@@ -2603,7 +2908,10 @@ const appUI = (function () {
 
     function closeProfileModal() {
         const modal = document.getElementById('profileModalOverlay');
-        if (modal) modal.classList.remove('show');
+        if (modal) {
+            modal.style.display = 'none';
+            modal.classList.remove('show');
+        }
     }
 
     function saveProfileChanges() {
@@ -2632,6 +2940,48 @@ const appUI = (function () {
         alert('🏡 Ev Sahibi Paneli: New York\'taki evinizi kiraya vermek için başvuru formu açılıyor...');
     }
 
+    function openSettingsModal() {
+        const userModal = document.getElementById('userModal');
+        if (userModal) userModal.classList.remove('show');
+        const modal = document.getElementById('settingsModalOverlay');
+        if (modal) {
+            modal.style.display = 'flex';
+            modal.classList.add('show');
+        }
+    }
+
+    function closeSettingsModal() {
+        const modal = document.getElementById('settingsModalOverlay');
+        if (modal) {
+            modal.style.display = 'none';
+            modal.classList.remove('show');
+        }
+    }
+
+    function resetAllData() {
+        if (confirm('Tüm favoriler, karşılaştırmalar ve tercih verileriniz sıfırlanacak. Devam etmek istiyor musunuz?')) {
+            localStorage.clear();
+            location.reload();
+        }
+    }
+
+    function exportUserData() {
+        const data = {
+            favorites: Array.from(favoriteIds),
+            compare: Array.from(compareIds),
+            currency: currentCurrency,
+            user: currentUserState,
+            exportedAt: new Date().toISOString()
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'nyc_rental_user_data.json';
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
     // ── AI SMART ASSISTANT MODULE ──
     /* ---- AI NAVBAR DROPDOWN ---- */
     function toggleAiDropdown(e) {
@@ -2640,13 +2990,11 @@ const appUI = (function () {
         const pill  = document.getElementById('aiNavPill');
         if (!panel) return;
         const isOpen = panel.classList.toggle('open');
-        // Dynamically position panel below the pill button
         if (pill) {
             const rect = pill.getBoundingClientRect();
             panel.style.top   = (rect.bottom + 8) + 'px';
             panel.style.right = (window.innerWidth - rect.right) + 'px';
             panel.style.left  = 'auto';
-            // Toggle active ring on pill
             if (isOpen) pill.classList.add('active');
             else        pill.classList.remove('active');
         }
@@ -2663,11 +3011,9 @@ const appUI = (function () {
         if (footer) footer.style.display = 'flex';
         chatBody.innerHTML = '';
 
-        // Question bubble
         chatBody.insertAdjacentHTML('beforeend',
             `<div class="ai-question-bubble">${escapeHtml(promptText)}</div>`);
 
-        // Typing dots
         const typingId = 'dtip_' + Date.now();
         chatBody.insertAdjacentHTML('beforeend',
             `<div id="${typingId}" class="ai-answer-bubble" style="padding:0.75rem 1rem;">
@@ -2697,7 +3043,6 @@ const appUI = (function () {
         if (footer) footer.style.display = 'none';
     }
 
-    // Close dropdown when clicking outside
     document.addEventListener('click', function(e) {
         const wrap  = document.getElementById('aiNavWrap');
         const panel = document.getElementById('aiDropdownPanel');
@@ -2733,17 +3078,14 @@ const appUI = (function () {
         const footer = document.getElementById('aiPanelFooter');
         if (!chatBody) return;
 
-        // Switch from welcome screen to chat panel
         if (welcomeArea) welcomeArea.style.display = 'none';
         chatBody.style.display = 'flex';
         if (footer) footer.style.display = 'flex';
         chatBody.innerHTML = '';
 
-        // Show question bubble
         const qBubble = `<div class="ai-question-bubble">${escapeHtml(promptText)}</div>`;
         chatBody.insertAdjacentHTML('beforeend', qBubble);
 
-        // Show typing indicator
         const typingId = 'typing_' + Date.now();
         const typingHtml = `
             <div id="${typingId}" class="ai-answer-bubble" style="padding:0.75rem 1rem;">
@@ -2752,7 +3094,6 @@ const appUI = (function () {
         chatBody.insertAdjacentHTML('beforeend', typingHtml);
         chatBody.scrollTop = chatBody.scrollHeight;
 
-        // Process and show answer
         setTimeout(() => {
             const typingEl = document.getElementById(typingId);
             if (typingEl) typingEl.remove();
@@ -2769,13 +3110,11 @@ const appUI = (function () {
     }
 
     function submitAiQuery() {
-        // Legacy function - kept for compatibility
     }
 
     function processAiQuery(query) {
         const q = query.toLowerCase();
 
-        // Query Pattern 1: Brooklyn ortalama altı evler
         if (q.includes('brooklyn') && (q.includes('ortalama') || q.includes('alt') || q.includes('ucuz') || q.includes('fiyat'))) {
             const bSelect = document.getElementById('boroughSelect');
             const maxPriceInput = document.getElementById('maxPriceInput');
@@ -2795,7 +3134,6 @@ const appUI = (function () {
             `;
         }
 
-        // Query Pattern 2: Yatırım için en uygun mahalle
         if (q.includes('yatırım') || q.includes('uygun mahalle') || q.includes('getiri') || q.includes('kazanç')) {
             return `
                 📈 <strong>NYC Gayrimenkul Yatırım & Kiralama Analiz Raporu:</strong><br><br>
@@ -2807,7 +3145,6 @@ const appUI = (function () {
             `;
         }
 
-        // Query Pattern 3: Manhattan en yüksek puanlı / lüks
         if (q.includes('manhattan') && (q.includes('puan') || q.includes('lüks') || q.includes('en iyi') || q.includes('kaliteli'))) {
             const bSelect = document.getElementById('boroughSelect');
             if (bSelect) bSelect.value = 'Manhattan';
@@ -2822,7 +3159,6 @@ const appUI = (function () {
             `;
         }
 
-        // Query Pattern 4: 100$ altı / ucuz yerler / bütçe
         if (q.includes('100') || q.includes('ucuz') || q.includes('bütçe')) {
             const maxPriceInput = document.getElementById('maxPriceInput');
             if (maxPriceInput) maxPriceInput.value = '100';
@@ -2834,7 +3170,6 @@ const appUI = (function () {
             `;
         }
 
-        // Query Pattern 5: Default General Analytics Response
         return `
             🔍 <strong>NYC Rental Veri Analizi:</strong><br><br>
             Sorgunuz işlendi! Veritabanımızda <strong>48.895 aktif konaklama seçeneği</strong> yer alıyor. Genel istatistikler:<br>
@@ -2844,7 +3179,6 @@ const appUI = (function () {
             Belli bir bölge, fiyat veya yatırım sorusu sormak için yukarıdaki hazır butonlara tıklayabilir veya sorunuzu yazabilirsiniz!
         `;
     }
-
     // Public API Methods Exposed to Window
     return {
         fetchData: fetchData,
@@ -2876,6 +3210,7 @@ const appUI = (function () {
         clearFilters: clearFilters,
         filterByBoroughFromExplore: filterByBoroughFromExplore,
         openBoroughModal: openBoroughModal,
+        closeBoroughModal: closeBoroughModal,
         clearBoroughFilterModal: applyBoroughFilterFromModal,
         clearAllFavorites: clearAllFavorites,
         renderFavoritesPage: renderFavoritesPage,
@@ -2912,7 +3247,17 @@ const appUI = (function () {
         applySavedSearch: applySavedSearch,
         deleteSavedSearch: deleteSavedSearch,
         clearFieldError: clearFieldError,
-        updateGuestCount: updateGuestCount
+        updateGuestCount: updateGuestCount,
+        formatPrice: formatPrice,
+        toggleCurrencyDropdown: toggleCurrencyDropdown,
+        selectCurrency: selectCurrency,
+        openSettingsModal: openSettingsModal,
+        closeSettingsModal: closeSettingsModal,
+        resetAllData: resetAllData,
+        exportUserData: exportUserData,
+        getDirections: getDirections,
+        markAllNotifsRead: markAllNotifsRead
     };
 
 })();
+window.appUI = appUI;
