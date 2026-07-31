@@ -132,7 +132,7 @@ const appUI = (function () {
         
         const priceInput = document.getElementById('priceRangeInput');
         if (priceInput && typeof updatePriceLabel === 'function') {
-            updatePriceLabel(priceInput.value); 
+            updatePriceLabel(priceInput.value, true); 
         }
         
         showToast(`💱 Para birimi ${code} (${currencyRates[code].symbol}) olarak değiştirildi.`);
